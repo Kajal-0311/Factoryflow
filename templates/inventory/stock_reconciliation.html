@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block page_title %}Stock Reconciliation: {{ result.item_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 800px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{% url 'inventory:stock_overview' %}">Stock Overview</a></li>
+                    <li class="breadcrumb-item active">Reconciliation</li>
+                </ol>
+            </nav>
+            <h5 class="fw-bold mb-0">Stock Reconciliation & Audit &bull; {{ result.item_name }}</h5>
+        </div>
+        <a href="{% url 'inventory:stock_overview' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Overview
+        </a>
+    </div>
+
+    <!-- Reconciliation Result Card -->
+    <div class="card card-custom mb-4 p-4 {% if result.is_reconciled %}border-success{% else %}border-danger{% endif %} shadow-sm">
+        <div class="text-center py-3">
+            {% if result.is_reconciled %}
+                <div class="text-success mb-2"><i class="bi bi-check-circle-fill display-4"></i></div>
+                <h4 class="fw-bold text-success">Stock Ledger Perfectly Reconciled</h4>
+                <p class="text-muted">The mathematical sum of all historical stock movements exactly matches current on-hand warehouse inventory.</p>
+            {% else %}
+                <div class="text-danger mb-2"><i class="bi bi-exclamation-triangle-fill display-4"></i></div>
+                <h4 class="fw-bold text-danger">Stock Discrepancy Flagged</h4>
+                <p class="text-muted">Mismatch detected between ledger transaction history and cached balance.</p>
+            {% endif %}
+        </div>
+
+        <div class="row g-3 text-center border-top pt-3">
+            <div class="col-4">
+                <small class="text-muted d-block">Computed From Ledger</small>
+                <h5 class="fw-bold mb-0 text-primary">{{ result.computed_from_ledger }}</h5>
+            </div>
+            <div class="col-4 border-start border-end">
+                <small class="text-muted d-block">Cached On-Hand Balance</small>
+                <h5 class="fw-bold mb-0 text-dark">{{ result.cached_stock }}</h5>
+            </div>
+            <div class="col-4">
+                <small class="text-muted d-block">Variance Discrepancy</small>
+                <h5 class="fw-bold mb-0 {% if result.is_reconciled %}text-success{% else %}text-danger{% endif %}">
+                    {{ result.discrepancy }}
+                </h5>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

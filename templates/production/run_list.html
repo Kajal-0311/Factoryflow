@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block page_title %}Batch Production Runs{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <h4 class="fw-bold mb-1 brand-font text-dark">Manufacturing Execution & Batch Runs</h4>
+            <p class="text-muted small mb-0">Record and audit factory batch production, recipe variance alerts, and unit packet costing sheets.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'bom:bom_list' %}" class="btn btn-outline-secondary d-flex align-items-center gap-1">
+                <i class="bi bi-journal-text"></i> Recipe BOMs
+            </a>
+            <a href="{% url 'production:create_run' %}" class="btn btn-teal text-white fw-bold d-flex align-items-center gap-1 shadow-sm" style="background-color: #0D9488 !important;">
+                <i class="bi bi-play-circle-fill"></i> Log Batch Run
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Search & Alert Filter -->
+    <div class="card card-custom mb-3 shadow-sm border-0">
+        <div class="card-body p-3">
+            <div class="row g-2 align-items-center justify-content-between">
+                <div class="col-12 col-md-5">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" placeholder="Filter run number, product, recipe..." data-table-search="#productionRunsTable">
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 text-md-end">
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle me-1">
+                        <i class="bi bi-exclamation-triangle me-1"></i>Red Badge: &gt; 3% Variance Alert
+                    </span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">
+                        <i class="bi bi-check2 me-1"></i>Within ±3% Standard
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Production Runs Table -->
+    <div class="card card-custom shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-modern" id="productionRunsTable">
+                <thead>
+                    <tr>
+                        <th>Batch Run #</th>
+                        <th>Product & Recipe</th>
+                        <th>Date</th>
+                        <th>Planned Qty</th>
+                        <th>Actual Good</th>
+                        <th>Yield Variance</th>
+                        <th class="text-end">Batch Cost (₹)</th>
+                        <th class="text-end">Cost / Pkt</th>
+                        <th class="text-end">Gross Margin</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in runs %}
+                    <tr>
+                        <td class="fw-bold font-monospace text-primary">
+                            <a href="{% url 'production:run_detail' r.id %}" class="text-decoration-none">
+                                {{ r.run_number }}
+                            </a>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ r.product.name }}</div>
+                            <small class="text-muted">BOM: {{ r.bom.bom_code }}</small>
+                        </td>
+                        <td class="text-muted small">{{ r.production_date|date:"d-M-Y" }}</td>
+                        <td>{{ r.batch_quantity|floatformat:0 }} pkts</td>
+                        <td class="fw-bold text-success">{{ r.actual_good_output|floatformat:0 }} pkts</td>
+                        <td>
+                            {% if r.yield_alert %}
+                                <span class="badge bg-danger text-white fw-bold"><i class="bi bi-exclamation-triangle me-1"></i>{{ r.yield_variance_percent }}% (Alert)</span>
+                            {% else %}
+                                <span class="badge bg-success-subtle text-success fw-bold">{{ r.yield_variance_percent }}%</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-semibold">₹ {{ r.costing.total_production_cost|floatformat:2|intcomma }}</td>
+                        <td class="text-end fw-bold text-dark">₹ {{ r.costing.cost_per_packet|floatformat:2 }}</td>
+                        <td class="text-end text-success fw-bold">₹ {{ r.costing.gross_margin_per_packet|floatformat:2 }}</td>
+                        <td><span class="badge-status badge-status-approved">Completed</span></td>
+                        <td class="text-end">
+                            <a href="{% url 'production:run_detail' r.id %}" class="btn btn-sm btn-light border py-1 px-2 fw-semibold" title="View Batch Cost Sheet">
+                                <i class="bi bi-file-text me-1"></i> Cost Sheet
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="11" class="text-center py-5 text-muted">
+                            <i class="bi bi-gear-wide-connected fs-1 d-block text-secondary mb-2"></i>
+                            <div class="fw-bold">No production batch runs logged yet.</div>
+                            <p class="small text-muted">Log your first batch output to calculate yield variance and unit costing.</p>
+                            <a href="{% url 'production:create_run' %}" class="btn btn-sm btn-primary">Log Batch Run</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

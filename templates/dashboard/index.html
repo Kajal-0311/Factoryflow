@@ -1,0 +1,939 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block page_title %}ERP Dashboard & Role Workspaces{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+
+    <!-- Role Workspace Navigation Tabs (Allows easy switching and demoing across all 4 assessment roles) -->
+    <div class="card card-custom mb-4 border-0 shadow-sm bg-white">
+        <div class="card-body p-2 p-md-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small fw-bold text-uppercase d-none d-md-inline" style="font-size: 0.72rem; letter-spacing: 0.6px;">Role Workspace:</span>
+                    <ul class="nav nav-pills gap-1" id="roleTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link py-1 px-3 small fw-semibold {% if active_role_view == 'admin' %}active bg-primary text-white{% else %}text-secondary bg-light{% endif %}" href="?view=admin">
+                                <i class="bi bi-speedometer2 me-1"></i> Executive ERP
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link py-1 px-3 small fw-semibold {% if active_role_view == 'production' %}active bg-teal text-white{% else %}text-secondary bg-light{% endif %}" href="?view=production" style="{% if active_role_view == 'production' %}background-color: #0D9488 !important;{% endif %}">
+                                <i class="bi bi-gear-wide-connected me-1"></i> Production Floor
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link py-1 px-3 small fw-semibold {% if active_role_view == 'salesman' %}active bg-success text-white{% else %}text-secondary bg-light{% endif %}" href="?view=salesman">
+                                <i class="bi bi-phone me-1"></i> Field Salesman
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link py-1 px-3 small fw-semibold {% if active_role_view == 'auditor' %}active bg-dark text-white{% else %}text-secondary bg-light{% endif %}" href="?view=auditor">
+                                <i class="bi bi-shield-check me-1"></i> Statutory & Audit
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="d-flex align-items-center gap-2 text-muted small">
+                    <span class="badge bg-light text-dark border"><i class="bi bi-person-badge me-1"></i>Logged In: <strong>{{ user_role }}</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active System Alerts Banner -->
+    {% if variance_alert_count > 0 or low_stock_count > 0 %}
+    <div class="row g-3 mb-4">
+        {% if variance_alert_count > 0 %}
+        <div class="col-md-6">
+            <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center justify-content-between p-3 rounded-3" role="alert" style="background-color: #FFFBEB; border-left: 4px solid #F59E0B !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-warning bg-opacity-25 p-2 text-warning">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark small">Production Variance Alerts (> 3% Threshold)</div>
+                        <div class="text-muted small">{{ variance_alert_count }} batch run(s) exceeded the standard 3.00% tolerance.</div>
+                    </div>
+                </div>
+                <a href="{% url 'production:run_list' %}?has_alert=1" class="btn btn-sm btn-outline-warning text-dark fw-bold px-3 py-1 text-nowrap">View Batches</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if low_stock_count > 0 %}
+        <div class="col-md-6">
+            <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center justify-content-between p-3 rounded-3" role="alert" style="background-color: #FEF2F2; border-left: 4px solid #EF4444 !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-danger bg-opacity-25 p-2 text-danger">
+                        <i class="bi bi-bell-fill fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark small">Critical Low Stock Warning</div>
+                        <div class="text-muted small">{{ low_stock_count }} material(s) reached or breached the reorder threshold.</div>
+                    </div>
+                </div>
+                <a href="{% url 'inventory:stock_overview' %}?low_stock=1" class="btn btn-sm btn-outline-danger fw-bold px-3 py-1 text-nowrap">Review Stock</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+
+    <!-- ============================================================== -->
+    <!-- TAB 1: EXECUTIVE ERP DASHBOARD (ADMIN VIEW)                   -->
+    <!-- ============================================================== -->
+    {% if active_role_view == 'admin' %}
+    <!-- Top KPI Metrics Grid -->
+    <div class="row g-3 mb-4">
+        <!-- Metric 1: Total Sales -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="metric-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="metric-title">GST Invoiced Sales</div>
+                        <div class="metric-value">₹ {{ total_sales|floatformat:2|intcomma }}</div>
+                    </div>
+                    <div class="metric-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-currency-rupee"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-top d-flex justify-content-between text-muted small">
+                    <span>Today's Orders: <strong class="text-dark">{{ todays_orders }}</strong></span>
+                    <span>Dispatched: <strong class="text-success">{{ completed_dispatches }}</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metric 2: Finished Goods Inventory -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="metric-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="metric-title">Finished Goods Stock</div>
+                        <div class="metric-value">{{ fg_total_packets|floatformat:0|intcomma }} <small class="fs-6 text-muted fw-normal">pkts</small></div>
+                    </div>
+                    <div class="metric-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-top d-flex justify-content-between text-muted small">
+                    <span>Valuation: <strong class="text-dark">₹ {{ fg_total_valuation|floatformat:0|intcomma }}</strong></span>
+                    <a href="{% url 'inventory:stock_overview' %}" class="text-primary text-decoration-none fw-semibold">View &rarr;</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metric 3: Production Costing -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="metric-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="metric-title">Cost Per Packet</div>
+                        <div class="metric-value">₹ {{ approx_cost_per_packet|floatformat:2 }}</div>
+                    </div>
+                    <div class="metric-icon bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-pie-chart"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-top d-flex justify-content-between text-muted small">
+                    <span>Unit Margin: <strong class="text-success">₹ {{ approx_margin_per_packet|floatformat:2 }}</strong></span>
+                    <span>Total Runs: <strong class="text-dark">{{ total_production_runs }}</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metric 4: Outstanding Receivables -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="metric-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="metric-title">Outstanding Receivables</div>
+                        <div class="metric-value text-danger">₹ {{ total_outstanding|floatformat:2|intcomma }}</div>
+                    </div>
+                    <div class="metric-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-wallet2"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-top d-flex justify-content-between text-muted small">
+                    <span>Pending Orders: <strong class="text-warning">{{ pending_orders }}</strong></span>
+                    <a href="{% url 'payments:ageing_report' %}" class="text-danger text-decoration-none fw-semibold">Ageing &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Inventory Valuation Bar -->
+    <div class="card card-custom mb-4 shadow-sm border-0 bg-white">
+        <div class="card-body p-3">
+            <div class="row g-3 text-center text-sm-start align-items-center">
+                <div class="col-6 col-md-3 border-end">
+                    <small class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Raw Materials Valuation</small>
+                    <span class="fs-6 fw-bold text-dark">₹ {{ rm_total_valuation|floatformat:2|intcomma }}</span>
+                </div>
+                <div class="col-6 col-md-3 border-end">
+                    <small class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Packaging Stock Valuation</small>
+                    <span class="fs-6 fw-bold text-dark">₹ {{ pm_total_valuation|floatformat:2|intcomma }}</span>
+                </div>
+                <div class="col-6 col-md-3 border-end">
+                    <small class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Finished Goods Valuation</small>
+                    <span class="fs-6 fw-bold text-dark">₹ {{ fg_total_valuation|floatformat:2|intcomma }}</span>
+                </div>
+                <div class="col-6 col-md-3 text-center">
+                    <a href="{% url 'production:create_run' %}" class="btn btn-sm btn-primary w-100 fw-bold py-2 shadow-sm">
+                        <i class="bi bi-play-circle me-1"></i> New Production Run
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Charts Section -->
+    <div class="row g-3 mb-4">
+        <!-- Chart 1: Product Sales Distribution -->
+        <div class="col-lg-7">
+            <div class="card card-custom h-100 shadow-sm border-0">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Invoiced Sales by Product</span>
+                    <span class="badge bg-light text-secondary border">GST Invoices</span>
+                </div>
+                <div class="card-body p-3">
+                    <canvas id="salesProductChart" style="max-height: 250px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart 2: Raw Material Consumption -->
+        <div class="col-lg-5">
+            <div class="card card-custom h-100 shadow-sm border-0">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-pie-chart-fill me-2 text-teal"></i>Material Consumption Share</span>
+                    <span class="badge bg-light text-secondary border">Batch Issues</span>
+                </div>
+                <div class="card-body p-3 d-flex align-items-center justify-content-center">
+                    <canvas id="rmConsumptionChart" style="max-height: 240px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Sales Orders & Production Batches -->
+    <div class="row g-3 mb-4">
+        <!-- Table 1: Recent Orders -->
+        <div class="col-lg-7">
+            <div class="card card-custom shadow-sm border-0">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-cart3 me-2 text-primary"></i>Recent Sales Orders</span>
+                    <a href="{% url 'sales:order_list' %}" class="small text-primary text-decoration-none fw-semibold">View All Orders &rarr;</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-modern">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Total (₹)</th>
+                                <th>Status</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for o in recent_orders %}
+                            <tr>
+                                <td class="fw-bold text-primary">{{ o.order_number }}</td>
+                                <td>
+                                    <div class="fw-semibold text-dark">{{ o.customer.name }}</div>
+                                    <small class="text-muted">{{ o.customer.state }}</small>
+                                </td>
+                                <td class="fw-bold">₹ {{ o.grand_total|floatformat:2|intcomma }}</td>
+                                <td>
+                                    <span class="badge-status badge-status-{{ o.status|lower }}">{{ o.get_status_display }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'sales:order_detail' o.id %}" class="btn btn-sm btn-light border py-1 px-2" title="View Order">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted py-4">No sales orders found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table 2: Recent Production Runs -->
+        <div class="col-lg-5">
+            <div class="card card-custom shadow-sm border-0">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-gear-wide-connected me-2 text-teal"></i>Recent Production Batches</span>
+                    <a href="{% url 'production:run_list' %}" class="small text-teal text-decoration-none fw-semibold">View All Runs &rarr;</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-modern">
+                        <thead>
+                            <tr>
+                                <th>Batch Run</th>
+                                <th>Output</th>
+                                <th>Yield Var</th>
+                                <th class="text-end">Cost/Pkt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in recent_runs %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-dark">{{ r.run_number }}</div>
+                                    <small class="text-muted">{{ r.product.name }}</small>
+                                </td>
+                                <td class="fw-semibold">{{ r.actual_good_output|floatformat:0 }} pkts</td>
+                                <td>
+                                    {% if r.yield_alert %}
+                                        <span class="badge bg-danger text-white fw-bold">{{ r.yield_variance_percent }}%</span>
+                                    {% else %}
+                                        <span class="badge bg-success-subtle text-success fw-bold">{{ r.yield_variance_percent }}%</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end fw-bold text-dark">
+                                    ₹ {{ r.costing.cost_per_packet|floatformat:2|default:"-" }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-4">No production runs found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    <!-- ============================================================== -->
+    <!-- TAB 2: PRODUCTION FLOOR DASHBOARD (SUPERVISOR VIEW)           -->
+    <!-- ============================================================== -->
+    {% if active_role_view == 'production' %}
+    <div class="card card-custom mb-4 border-0 shadow-sm bg-gradient text-white p-3" style="background: linear-gradient(135deg, #0F766E 0%, #115E59 100%);">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+                <span class="badge bg-white bg-opacity-25 text-white mb-1"><i class="bi bi-gear-fill me-1"></i>Production Control Hub</span>
+                <h4 class="fw-bold mb-1 brand-font text-white">Manufacturing Floor Operations</h4>
+                <p class="mb-0 text-white-50 small">Track recipe batch scaling, direct material consumption, packaging losses, and 3% tolerance alerts.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'bom:bom_list' %}" class="btn btn-light bg-opacity-10 text-white border-white border-opacity-25 px-3 py-2 fw-semibold">
+                    <i class="bi bi-journal-text me-1"></i> Recipe BOMs
+                </a>
+                <a href="{% url 'production:create_run' %}" class="btn btn-warning text-dark px-4 py-2 fw-bold shadow">
+                    <i class="bi bi-plus-circle-fill me-1"></i> Log Batch Run
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Production KPIs -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="metric-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="metric-title">Good Packets Output</div>
+                        <div class="metric-value">{{ total_good_produced|floatformat:0|intcomma }} <small class="fs-6 text-muted">pkts</small></div>
+                    </div>
+                    <div class="metric-icon bg-teal bg-opacity-10 text-teal">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">Total verified finished stock</div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="metric-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="metric-title">Completed Runs</div>
+                        <div class="metric-value">{{ total_production_runs }}</div>
+                    </div>
+                    <div class="metric-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-play-circle"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">Standard batches processed</div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="metric-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="metric-title">Variance Alerts (> 3%)</div>
+                        <div class="metric-value text-danger">{{ variance_alert_count }}</div>
+                    </div>
+                    <div class="metric-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-exclamation-octagon"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">Requires supervisor inspection</div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="metric-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="metric-title">Average Cost/Pkt</div>
+                        <div class="metric-value">₹ {{ approx_cost_per_packet|floatformat:2 }}</div>
+                    </div>
+                    <div class="metric-icon bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-calculator"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">Benchmark target: ~₹ 31.14</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Raw Material & Packaging Floor Stock Gauges -->
+    <div class="card card-custom mb-4 shadow-sm border-0">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-boxes me-2 text-teal"></i>On-Hand Production Inventory & Reorder Level Gauges</span>
+            <a href="{% url 'inventory:stock_overview' %}" class="small text-teal text-decoration-none fw-semibold">Inventory Hub &rarr;</a>
+        </div>
+        <div class="card-body p-3">
+            <div class="row g-3">
+                {% for rm in raw_materials %}
+                <div class="col-md-4">
+                    <div class="p-3 rounded border bg-light bg-opacity-50">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-dark">{{ rm.name }}</span>
+                            <span class="badge {% if rm.is_low_stock %}bg-danger{% else %}bg-success{% endif %}">
+                                {{ rm.current_stock|floatformat:1 }} {{ rm.uom.code }}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted small mb-2">
+                            <span>WAC: ₹ {{ rm.weighted_average_cost|floatformat:2 }}/{{ rm.uom.code }}</span>
+                            <span>Min Reorder: {{ rm.reorder_level }} {{ rm.uom.code }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar {% if rm.is_low_stock %}bg-danger{% else %}bg-teal{% endif %}" role="progressbar" style="width: {% if rm.reorder_level > 0 %}{% widthratio rm.current_stock rm.reorder_level 50 %}{% else %}100{% endif %}%;"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                {% for pm in packaging_materials %}
+                <div class="col-md-6">
+                    <div class="p-3 rounded border bg-light bg-opacity-50">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-dark">{{ pm.name }} ({{ pm.get_packaging_type_display }})</span>
+                            <span class="badge {% if pm.is_low_stock %}bg-danger{% else %}bg-primary{% endif %}">
+                                {{ pm.current_stock|floatformat:0 }} {{ pm.uom.code }}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted small mb-2">
+                            <span>Purchase Rate: ₹ {{ pm.purchase_rate|floatformat:2 }}</span>
+                            <span>Reorder Level: {{ pm.reorder_level|floatformat:0 }} pcs</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar {% if pm.is_low_stock %}bg-danger{% else %}bg-primary{% endif %}" role="progressbar" style="width: {% if pm.reorder_level > 0 %}{% widthratio pm.current_stock pm.reorder_level 50 %}{% else %}100{% endif %}%;"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Production Batches Log Table -->
+    <div class="card card-custom shadow-sm border-0 mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-list-task me-2 text-teal"></i>Recent Batch Runs & Yield Audit</span>
+            <input type="text" class="form-control form-control-sm w-auto" placeholder="Filter batch number..." data-table-search="#supervisorBatchesTable">
+        </div>
+        <div class="table-responsive">
+            <table class="table table-modern" id="supervisorBatchesTable">
+                <thead>
+                    <tr>
+                        <th>Run Number</th>
+                        <th>Product & Recipe</th>
+                        <th>Target Qty</th>
+                        <th>Actual Good</th>
+                        <th>Yield Variance</th>
+                        <th>Batch Cost (₹)</th>
+                        <th>Cost/Pkt</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for run in supervisor_runs %}
+                    <tr>
+                        <td class="fw-bold text-primary">{{ run.run_number }}</td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ run.product.name }}</div>
+                            <small class="text-muted">BOM: {{ run.bom.bom_code }}</small>
+                        </td>
+                        <td>{{ run.batch_quantity|floatformat:0 }} pkts</td>
+                        <td class="fw-bold text-success">{{ run.actual_good_output|floatformat:0 }} pkts</td>
+                        <td>
+                            {% if run.yield_alert %}
+                                <span class="badge bg-danger text-white fw-bold"><i class="bi bi-exclamation-triangle me-1"></i>{{ run.yield_variance_percent }}%</span>
+                            {% else %}
+                                <span class="badge bg-success-subtle text-success fw-bold">{{ run.yield_variance_percent }}%</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold">₹ {{ run.costing.total_production_cost|floatformat:2|intcomma|default:"-" }}</td>
+                        <td class="fw-bold text-dark">₹ {{ run.costing.cost_per_packet|floatformat:2|default:"-" }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'production:run_detail' run.id %}" class="btn btn-sm btn-light border py-1 px-2">
+                                <i class="bi bi-file-text me-1"></i>Cost Sheet
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8" class="text-center text-muted py-4">No production runs recorded yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+
+    <!-- ============================================================== -->
+    <!-- TAB 3: FIELD SALESMAN MOBILE WORKSPACE (SALESMAN VIEW)        -->
+    <!-- ============================================================== -->
+    {% if active_role_view == 'salesman' %}
+    <!-- Hero Action Card for Fast Mobile Order Taking -->
+    <div class="card card-custom mb-4 border-0 shadow-sm text-white" style="background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%);">
+        <div class="card-body p-4">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                    <span class="badge bg-white bg-opacity-25 text-white mb-2"><i class="bi bi-phone me-1"></i>Field Sales Workspace</span>
+                    <h3 class="fw-bold mb-1 brand-font text-white">Book Retailer & Distributor Orders</h3>
+                    <p class="text-white-50 mb-0 small">Take orders on the road, check live finished goods stock, and calculate GST totals instantly.</p>
+                </div>
+                <div>
+                    <a href="{% url 'sales:create_order' %}" class="btn btn-warning btn-lg px-4 py-3 fw-bold shadow text-dark d-flex align-items-center gap-2">
+                        <i class="bi bi-cart-plus-fill fs-4"></i>
+                        <span>Take New Order</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Salesman Quick Stats Grid -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="metric-card p-3">
+                <div class="metric-title">Total Orders</div>
+                <div class="metric-value">{{ salesman_metrics.total_my_orders }}</div>
+                <div class="text-muted small mt-1">Booked by you</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card p-3">
+                <div class="metric-title">My Total Sales</div>
+                <div class="metric-value text-primary">₹ {{ salesman_metrics.my_sales_amount|floatformat:0|intcomma }}</div>
+                <div class="text-muted small mt-1">GST Invoiced</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card p-3">
+                <div class="metric-title">Pending Approval</div>
+                <div class="metric-value text-warning">{{ salesman_metrics.my_pending }}</div>
+                <div class="text-muted small mt-1">Under verification</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card p-3">
+                <div class="metric-title">Dispatched</div>
+                <div class="metric-value text-success">{{ salesman_metrics.my_dispatched }}</div>
+                <div class="text-muted small mt-1">Delivered to client</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Customer Outlets Directory -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="card card-custom h-100 shadow-sm border-0">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-shop me-2 text-primary"></i>Customer Directory & Credit Status</span>
+                    <span class="badge bg-light text-muted border">{{ all_customers.count }} Outlets</span>
+                </div>
+                <div class="card-body p-2 p-md-3">
+                    <div class="list-group list-group-flush">
+                        {% for c in all_customers %}
+                        <div class="list-group-item px-2 py-3 d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom">
+                            <div>
+                                <div class="fw-bold text-dark">{{ c.name }}</div>
+                                <div class="small text-muted">
+                                    <span class="badge bg-light text-secondary border me-1">{{ c.get_customer_type_display }}</span>
+                                    <span><i class="bi bi-geo-alt"></i> {{ c.state }} &bull; GSTIN: {{ c.gstin|default:"Unregistered" }}</span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <a href="{% url 'sales:create_order' %}?customer_id={{ c.id }}" class="btn btn-sm btn-outline-primary fw-bold">
+                                    <i class="bi bi-plus-lg me-1"></i> Order
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Finished Goods On-Hand Stock (Salesman view to check availability) -->
+        <div class="col-lg-6">
+            <div class="card card-custom h-100 shadow-sm border-0">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-boxes me-2 text-success"></i>Finished Goods Stock Check</span>
+                    <span class="badge bg-success-subtle text-success fw-bold">Ready to Dispatch</span>
+                </div>
+                <div class="card-body p-3">
+                    <p class="text-muted small">Verify product availability before promising delivery schedules to prevent order shortages:</p>
+                    <div class="row g-3">
+                        {% for p in products %}
+                        <div class="col-12">
+                            <div class="p-3 rounded border d-flex justify-content-between align-items-center bg-light">
+                                <div>
+                                    <div class="fw-bold text-dark">{{ p.name }} ({{ p.pack_size }})</div>
+                                    <small class="text-muted">HSN Code: {{ p.hsn_code }} &bull; GST: {{ p.gst_rate }}%</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fs-5 fw-bold text-success">{{ p.current_stock|floatformat:0 }} pkts</div>
+                                    <small class="text-muted">Selling: ₹ {{ p.selling_price|floatformat:2 }}/pkt</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Recent Field Orders -->
+    <div class="card card-custom shadow-sm border-0 mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-receipt me-2 text-primary"></i>My Recent Field Orders</span>
+            <a href="{% url 'sales:order_list' %}" class="small text-primary text-decoration-none fw-semibold">All My Orders &rarr;</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Order Date</th>
+                        <th>Grand Total</th>
+                        <th>Fulfilment Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in salesman_metrics.recent_orders %}
+                    <tr>
+                        <td class="fw-bold text-primary">{{ o.order_number }}</td>
+                        <td class="fw-semibold text-dark">{{ o.customer.name }}</td>
+                        <td class="text-muted">{{ o.order_date|date:"d-M-Y" }}</td>
+                        <td class="fw-bold">₹ {{ o.grand_total|floatformat:2|intcomma }}</td>
+                        <td>
+                            <span class="badge-status badge-status-{{ o.status|lower }}">{{ o.get_status_display }}</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'sales:order_detail' o.id %}" class="btn btn-sm btn-light border py-1 px-2">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">No recent orders found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+
+    <!-- ============================================================== -->
+    <!-- TAB 4: STATUTORY & AUDIT HUB (AUDITOR / OWNER VIEW)          -->
+    <!-- ============================================================== -->
+    {% if active_role_view == 'auditor' %}
+    <div class="card card-custom mb-4 border-0 shadow-sm text-white p-3" style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+                <span class="badge bg-white bg-opacity-25 text-white mb-1"><i class="bi bi-shield-check me-1"></i>Internal Audit & Governance</span>
+                <h4 class="fw-bold mb-1 brand-font text-white">Financial & Statutory Audit Control</h4>
+                <p class="mb-0 text-white-50 small">Monitor GSTR-1 outward tax liability, 4-bucket receivables ageing, and immutable stock ledger entries.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'payments:ageing_report' %}" class="btn btn-light bg-opacity-10 text-white border-white border-opacity-25 px-3 py-2 fw-semibold">
+                    <i class="bi bi-clock-history me-1"></i> Full Ageing
+                </a>
+                <a href="{% url 'reports:report_hub' %}" class="btn btn-info text-white px-3 py-2 fw-bold shadow">
+                    <i class="bi bi-file-earmark-bar-graph me-1"></i> 16 Reports Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4-Bucket Receivables Ageing Grid -->
+    <div class="card card-custom mb-4 shadow-sm border-0">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-calendar-range me-2 text-danger"></i>Receivables Ageing Breakdown (As of Today)</span>
+            <span class="fw-bold text-dark">Total Outstanding: <span class="text-danger">₹ {{ ageing_data.grand_total.total|floatformat:2|intcomma }}</span></span>
+        </div>
+        <div class="card-body p-3">
+            <div class="row g-3 text-center">
+                <div class="col-6 col-md-3">
+                    <div class="p-3 rounded border border-success border-opacity-50 bg-success-subtle">
+                        <small class="text-success fw-bold text-uppercase d-block" style="font-size: 0.7rem;">0 - 30 Days (Current)</small>
+                        <div class="fs-4 fw-bold text-success mt-1">₹ {{ ageing_data.grand_total.b_0_30|floatformat:2|intcomma }}</div>
+                        <small class="text-muted">Standard credit term</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 rounded border border-primary border-opacity-50 bg-primary-subtle">
+                        <small class="text-primary fw-bold text-uppercase d-block" style="font-size: 0.7rem;">31 - 60 Days</small>
+                        <div class="fs-4 fw-bold text-primary mt-1">₹ {{ ageing_data.grand_total.b_31_60|floatformat:2|intcomma }}</div>
+                        <small class="text-muted">Follow-up due</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 rounded border border-warning border-opacity-50 bg-warning-subtle">
+                        <small class="text-warning-emphasis fw-bold text-uppercase d-block" style="font-size: 0.7rem;">61 - 90 Days</small>
+                        <div class="fs-4 fw-bold text-warning-emphasis mt-1">₹ {{ ageing_data.grand_total.b_61_90|floatformat:2|intcomma }}</div>
+                        <small class="text-muted">Notice required</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 rounded border border-danger border-opacity-50 bg-danger-subtle">
+                        <small class="text-danger fw-bold text-uppercase d-block" style="font-size: 0.7rem;">> 90 Days (Overdue)</small>
+                        <div class="fs-4 fw-bold text-danger mt-1">₹ {{ ageing_data.grand_total.b_90_plus|floatformat:2|intcomma }}</div>
+                        <small class="text-muted">High default risk</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statutory GSTR-1 Outward Summary Table -->
+    <div class="card card-custom mb-4 shadow-sm border-0">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-file-earmark-ruled me-2 text-primary"></i>Statutory GSTR-1 Outward Tax Reconciliation Summary</span>
+            <span class="badge bg-light text-dark border">FY 2026-27</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>Tax Category</th>
+                        <th>Invoice Count</th>
+                        <th>Taxable Value (₹)</th>
+                        <th>CGST (2.5%) (₹)</th>
+                        <th>SGST (2.5%) (₹)</th>
+                        <th>IGST (5.0%) (₹)</th>
+                        <th>Total Tax (₹)</th>
+                        <th class="text-end">Invoice Grand Total (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="fw-bold">B2B Registered Clients</td>
+                        <td>{{ gst_outward.b2b.count }}</td>
+                        <td>₹ {{ gst_outward.b2b.taxable|floatformat:2|intcomma }}</td>
+                        <td>₹ {{ gst_outward.b2b.cgst|floatformat:2|intcomma }}</td>
+                        <td>₹ {{ gst_outward.b2b.sgst|floatformat:2|intcomma }}</td>
+                        <td>₹ {{ gst_outward.b2b.igst|floatformat:2|intcomma }}</td>
+                        <td class="fw-semibold">₹ {{ gst_outward.b2b.cgst|add:gst_outward.b2b.sgst|add:gst_outward.b2b.igst|floatformat:2|intcomma }}</td>
+                        <td class="text-end fw-bold">₹ {{ gst_outward.b2b.total|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">B2C Unregistered Outlets</td>
+                        <td>{{ gst_outward.b2c.count }}</td>
+                        <td>₹ {{ gst_outward.b2c.taxable|floatformat:2|intcomma }}</td>
+                        <td>₹ {{ gst_outward.b2c.cgst|floatformat:2|intcomma }}</td>
+                        <td>₹ {{ gst_outward.b2c.sgst|floatformat:2|intcomma }}</td>
+                        <td>₹ {{ gst_outward.b2c.igst|floatformat:2|intcomma }}</td>
+                        <td class="fw-semibold">₹ {{ gst_outward.b2c.cgst|add:gst_outward.b2c.sgst|add:gst_outward.b2c.igst|floatformat:2|intcomma }}</td>
+                        <td class="text-end fw-bold">₹ {{ gst_outward.b2c.total|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr class="table-light fw-bold">
+                        <td>TOTAL OUTWARD LIABILITY</td>
+                        <td>{{ gst_outward.overall.count }}</td>
+                        <td>₹ {{ gst_outward.overall.taxable|floatformat:2|intcomma }}</td>
+                        <td>₹ {{ gst_outward.overall.cgst|floatformat:2|intcomma }}</td>
+                        <td>₹ {{ gst_outward.overall.sgst|floatformat:2|intcomma }}</td>
+                        <td>₹ {{ gst_outward.overall.igst|floatformat:2|intcomma }}</td>
+                        <td class="text-primary">₹ {{ gst_outward.overall.total_tax|floatformat:2|intcomma }}</td>
+                        <td class="text-end text-success fs-6">₹ {{ gst_outward.overall.grand_total|floatformat:2|intcomma }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Immutable Stock Ledger & System Audit Trail -->
+    <div class="row g-3 mb-4">
+        <!-- Stock Ledger Timeline -->
+        <div class="col-lg-7">
+            <div class="card card-custom shadow-sm border-0">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-journal-text me-2 text-teal"></i>Recent Stock Ledger Entries (Double-Entry Log)</span>
+                    <a href="{% url 'inventory:stock_ledger' %}" class="small text-teal text-decoration-none fw-semibold">Full Ledger &rarr;</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-modern">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Transaction</th>
+                                <th>Movement</th>
+                                <th>Balance After</th>
+                                <th class="text-end">Ref Doc</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in recent_ledger_entries %}
+                            <tr>
+                                <td class="fw-semibold text-dark">{{ entry.item_name }}</td>
+                                <td><span class="badge bg-light text-secondary border">{{ entry.get_transaction_type_display }}</span></td>
+                                <td>
+                                    {% if entry.quantity_change > 0 %}
+                                        <span class="text-success fw-bold">+{{ entry.quantity_change }} {{ entry.uom_code }}</span>
+                                    {% else %}
+                                        <span class="text-danger fw-bold">{{ entry.quantity_change }} {{ entry.uom_code }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="fw-bold">{{ entry.balance_after }} {{ entry.uom_code }}</td>
+                                <td class="text-end font-monospace small text-muted">{{ entry.reference_doc }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted py-4">No ledger movements recorded yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Log Activity Feed -->
+        <div class="col-lg-5">
+            <div class="card card-custom shadow-sm border-0">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-shield-check me-2 text-primary"></i>System Audit Trail Feed</span>
+                    <a href="{% url 'audit:audit_log_list' %}" class="small text-primary text-decoration-none fw-semibold">Audit Logs &rarr;</a>
+                </div>
+                <div class="p-3">
+                    <div class="list-group list-group-flush">
+                        {% for log in recent_audit_logs %}
+                        <div class="list-group-item px-0 py-2 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-dark-subtle text-dark fw-bold" style="font-size: 0.7rem;">{{ log.action }}</span>
+                                <small class="text-muted" style="font-size: 0.72rem;">{{ log.timestamp|date:"d-M H:i" }}</small>
+                            </div>
+                            <div class="small fw-semibold text-dark mt-1">{{ log.module }}: {{ log.record_representation|default:log.record_id }}</div>
+                            <div class="text-muted small" style="font-size: 0.75rem;">By: <strong>{{ log.user.username|default:"System" }}</strong> (IP: {{ log.ip_address|default:"127.0.0.1" }})</div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-4">No audit logs recorded yet.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if active_role_view == 'admin' %}
+    // Chart 1: Product-wise sales
+    const ctxProduct = document.getElementById('salesProductChart')?.getContext('2d');
+    if (ctxProduct) {
+        new Chart(ctxProduct, {
+            type: 'bar',
+            data: {
+                labels: {{ product_labels|safe }},
+                datasets: [{
+                    label: 'Sales Revenue (₹)',
+                    data: {{ product_values|safe }},
+                    backgroundColor: '#0284C7',
+                    borderRadius: 6,
+                    maxBarThickness: 45
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Revenue: ₹ ' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#F1F5F9' },
+                        ticks: {
+                            callback: function(val) { return '₹ ' + val.toLocaleString(); }
+                        }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // Chart 2: RM Consumption Breakdown
+    const ctxRM = document.getElementById('rmConsumptionChart')?.getContext('2d');
+    if (ctxRM) {
+        new Chart(ctxRM, {
+            type: 'doughnut',
+            data: {
+                labels: {{ rm_labels|safe }},
+                datasets: [{
+                    data: {{ rm_values|safe }},
+                    backgroundColor: ['#0D9488', '#0EA5E9', '#F59E0B', '#8B5CF6', '#EC4899'],
+                    borderWidth: 2,
+                    borderColor: '#FFFFFF'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 11 } }
+                    }
+                },
+                cutout: '68%'
+            }
+        });
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

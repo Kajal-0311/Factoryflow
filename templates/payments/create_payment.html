@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block page_title %}Record Customer Payment{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 800px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h5 class="fw-bold mb-1">Record Payment Receipt</h5>
+            <small class="text-muted">Allocate funds against specific invoice or auto-settle oldest outstanding invoices.</small>
+        </div>
+        <a href="{% url 'payments:payment_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Collections
+        </a>
+    </div>
+
+    <form method="post" action="{% url 'payments:create_payment' %}">
+        {% csrf_token %}
+
+        <div class="card card-custom mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-person-check me-2 text-primary"></i>Customer & Allocation Target</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Customer *</label>
+                        <select name="customer_id" id="customerSelect" class="form-select" required>
+                            <option value="">-- Choose Customer --</option>
+                            {% for c in customers %}
+                            <option value="{{ c.id }}" {% if preselected_invoice and preselected_invoice.customer_id == c.id %}selected{% endif %}>
+                                {{ c.name }} ({{ c.state }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Specific Invoice Allocation (Optional)</label>
+                        <select name="invoice_id" id="invoiceSelect" class="form-select">
+                            <option value="">-- Auto-allocate oldest invoices (FIFO) --</option>
+                            {% for inv in invoices %}
+                            <option value="{{ inv.id }}" data-customer="{{ inv.customer_id }}" data-outstanding="{{ inv.outstanding_amount }}"
+                                {% if preselected_invoice and preselected_invoice.id == inv.id %}selected{% endif %}>
+                                {{ inv.invoice_number }} (Due: ₹{{ inv.outstanding_amount }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-custom mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-cash me-2 text-success"></i>Payment Transaction Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Amount Received (₹) *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" step="0.01" name="amount" id="amountInput" class="form-control fw-bold fs-5 text-success" 
+                                value="{% if preselected_invoice %}{{ preselected_invoice.outstanding_amount }}{% else %}4000.00{% endif %}" required>
+                        </div>
+                        <small class="text-muted" id="maxHelp">Cannot exceed total customer outstanding</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Payment Date</label>
+                        <input type="date" name="payment_date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Payment Instrument *</label>
+                        <select name="payment_method" class="form-select" required>
+                            {% for code, label in methods %}
+                            <option value="{{ code }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Bank UTR / Cheque / Ref Number</label>
+                        <input type="text" name="transaction_reference" class="form-control" placeholder="e.g. NEFT-SBI-4910284" value="NEFT-SBI-4910284">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Remarks</label>
+                        <input type="text" name="notes" class="form-control" placeholder="Part payment against invoice...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-grid mb-5">
+            <button type="submit" class="btn btn-success btn-lg py-3 fw-bold shadow">
+                <i class="bi bi-check2-circle me-2"></i> Post Payment Receipt
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

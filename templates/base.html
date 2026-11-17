@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}FactoryFlow ERP{% endblock %} | Food Manufacturing SaaS</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --ff-primary: #0284C7;
+            --ff-primary-dark: #0369A1;
+            --ff-primary-light: #E0F2FE;
+            --ff-navy: #0B132B;
+            --ff-navy-dark: #070B19;
+            --ff-navy-light: #1C2541;
+            --ff-teal: #0D9488;
+            --ff-teal-light: #14B8A6;
+            --ff-slate: #64748B;
+            --ff-slate-light: #F1F5F9;
+            --ff-bg: #F8FAFC;
+            --ff-card-border: #E2E8F0;
+            --ff-sidebar-width: 260px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--ff-bg);
+            color: #1E293B;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            letter-spacing: -0.011em;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4, h5, h6, .brand-font {
+            font-family: 'Outfit', 'Inter', sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        /* Number tabular styling for financial and inventory precision */
+        .tabular-nums, .metric-value, .table td {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.03);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: var(--ff-sidebar-width);
+            background: linear-gradient(180deg, var(--ff-navy) 0%, var(--ff-navy-dark) 100%);
+            color: #94A3B8;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1040;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar .brand {
+            padding: 20px 22px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar .brand .logo-icon {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, #0EA5E9 0%, #0D9488 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-size: 1.15rem;
+            box-shadow: 0 4px 10px rgba(14, 165, 233, 0.35);
+        }
+
+        .sidebar .brand .badge-tag {
+            font-size: 0.65rem;
+            font-weight: 700;
+            background: rgba(14, 165, 233, 0.2);
+            color: #38BDF8;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-section-title {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #475569;
+            padding: 16px 22px 6px;
+            font-weight: 700;
+        }
+
+        .sidebar .nav-link {
+            color: #94A3B8;
+            padding: 9px 20px;
+            margin: 2px 10px;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.15s ease-in-out;
+            text-decoration: none;
+        }
+
+        .sidebar .nav-link:hover {
+            color: #FFFFFF;
+            background-color: rgba(255, 255, 255, 0.06);
+            transform: translateX(2px);
+        }
+
+        .sidebar .nav-link.active {
+            color: #FFFFFF;
+            background: linear-gradient(90deg, rgba(14, 165, 233, 0.2) 0%, rgba(14, 165, 233, 0.05) 100%);
+            border-left: 3px solid #0EA5E9;
+            font-weight: 600;
+        }
+
+        .sidebar .nav-link i {
+            font-size: 1.1rem;
+            color: #64748B;
+            transition: color 0.15s ease-in-out;
+        }
+
+        .sidebar .nav-link:hover i,
+        .sidebar .nav-link.active i {
+            color: #38BDF8;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            background: rgba(0, 0, 0, 0.15);
+            font-size: 0.75rem;
+        }
+
+        /* Main Content Layout */
+        .main-wrapper {
+            margin-left: var(--ff-sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .top-navbar {
+            background-color: #FFFFFF;
+            border-bottom: 1px solid var(--ff-card-border);
+            padding: 12px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .content-area {
+            padding: 28px;
+            flex: 1;
+        }
+
+        /* SaaS Metric Cards */
+        .metric-card {
+            background: #FFFFFF;
+            border: 1px solid var(--ff-card-border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04);
+            border-color: #CBD5E1;
+        }
+
+        .metric-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            flex-shrink: 0;
+        }
+
+        .metric-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--ff-slate);
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--ff-navy);
+            margin: 4px 0 0;
+            line-height: 1.2;
+        }
+
+        /* Cards & Panels */
+        .card-custom {
+            background: #FFFFFF;
+            border: 1px solid var(--ff-card-border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            overflow: hidden;
+        }
+
+        .card-custom .card-header {
+            background-color: #FFFFFF;
+            border-bottom: 1px solid var(--ff-card-border);
+            padding: 16px 20px;
+            font-weight: 600;
+            color: var(--ff-navy);
+        }
+
+        /* SaaS Pill Status Badges */
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            font-weight: 600;
+            font-size: 0.74rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .badge-status::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .badge-status-approved {
+            background-color: #ECFDF5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+        .badge-status-approved::before { background-color: #10B981; }
+
+        .badge-status-dispatched {
+            background-color: #F0FDFA;
+            color: #115E59;
+            border: 1px solid #99F6E4;
+        }
+        .badge-status-dispatched::before { background-color: #0D9488; }
+
+        .badge-status-pending, .badge-status-submitted {
+            background-color: #FFFBEB;
+            color: #92400E;
+            border: 1px solid #FDE68A;
+        }
+        .badge-status-pending::before, .badge-status-submitted::before { background-color: #F59E0B; }
+
+        .badge-status-danger, .badge-status-rejected, .badge-status-shortage {
+            background-color: #FEF2F2;
+            color: #991B1B;
+            border: 1px solid #FECACA;
+        }
+        .badge-status-danger::before, .badge-status-rejected::before, .badge-status-shortage::before { background-color: #EF4444; }
+
+        .badge-status-invoiced, .badge-status-posted {
+            background-color: #EFF6FF;
+            color: #1E40AF;
+            border: 1px solid #BFDBFE;
+        }
+        .badge-status-invoiced::before, .badge-status-posted::before { background-color: #3B82F6; }
+
+        /* Modern Table Styling */
+        .table-modern {
+            margin-bottom: 0;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table-modern thead th {
+            background-color: #F8FAFC;
+            color: #475569;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--ff-card-border);
+            border-top: none;
+            white-space: nowrap;
+        }
+
+        .table-modern tbody tr {
+            transition: background-color 0.12s ease;
+        }
+
+        .table-modern tbody tr:hover {
+            background-color: #F8FAFC;
+        }
+
+        .table-modern tbody td {
+            padding: 14px 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid #F1F5F9;
+            font-size: 0.86rem;
+            color: #334155;
+        }
+
+        .table-modern tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Mobile Bottom Nav Bar */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #FFFFFF;
+            border-top: 1px solid var(--ff-card-border);
+            z-index: 1050;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .mobile-bottom-nav .nav-item-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #64748B;
+            text-decoration: none;
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            transition: color 0.15s;
+        }
+
+        .mobile-bottom-nav .nav-item-btn i {
+            font-size: 1.25rem;
+            margin-bottom: 2px;
+        }
+
+        .mobile-bottom-nav .nav-item-btn.active,
+        .mobile-bottom-nav .nav-item-btn:hover {
+            color: var(--ff-primary);
+        }
+
+        .mobile-bottom-nav .nav-item-btn.cta-btn {
+            background: linear-gradient(135deg, #0284C7 0%, #0D9488 100%);
+            color: #FFFFFF;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            margin-top: -16px;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+            border: 3px solid #FFFFFF;
+        }
+
+        .mobile-bottom-nav .nav-item-btn.cta-btn i {
+            margin-bottom: 0;
+            font-size: 1.4rem;
+        }
+
+        /* Mobile Responsive Adjustments */
+        @media (max-width: 992px) {
+            .sidebar {
+                margin-left: calc(-1 * var(--ff-sidebar-width));
+            }
+            .sidebar.show {
+                margin-left: 0;
+                box-shadow: 10px 0 30px rgba(0,0,0,0.3);
+            }
+            .main-wrapper {
+                margin-left: 0;
+                padding-bottom: 70px; /* Space for bottom nav */
+            }
+            .top-navbar {
+                padding: 10px 16px;
+            }
+            .content-area {
+                padding: 16px;
+            }
+            .mobile-bottom-nav {
+                display: flex;
+            }
+            .sidebar-backdrop {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(15, 23, 42, 0.6);
+                backdrop-filter: blur(2px);
+                z-index: 1035;
+            }
+            .sidebar-backdrop.show {
+                display: block;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Brand Header -->
+        <div class="brand">
+            <div class="d-flex align-items-center gap-2">
+                <div class="logo-icon">
+                    <i class="bi bi-box-seam-fill"></i>
+                </div>
+                <div>
+                    <span class="brand-font fs-5 text-white fw-bold">FactoryFlow</span>
+                    <span class="d-block text-secondary" style="font-size: 0.65rem; margin-top: -3px;">Food ERP SaaS</span>
+                </div>
+            </div>
+            <span class="badge-tag">TN GST</span>
+        </div>
+
+        <!-- Role Badge Display -->
+        <div class="px-3 pt-3 pb-2">
+            <div class="p-2 rounded border border-secondary border-opacity-25 bg-white bg-opacity-5 d-flex align-items-center gap-2">
+                <div class="rounded-circle bg-info bg-opacity-25 text-info d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.85rem;">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div class="text-truncate">
+                    <div class="text-white small fw-bold text-truncate">{{ request.user.get_full_name|default:request.user.username }}</div>
+                    <span class="text-info text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">{{ user_role|default:"User" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <div class="nav flex-column py-2">
+            <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-grid-1x2-fill"></i>
+                <span>ERP Dashboard</span>
+            </a>
+
+            <!-- Sales Operations -->
+            <div class="nav-section-title">Sales & Billing</div>
+            <a href="{% url 'sales:order_list' %}" class="nav-link {% if 'sales' in request.resolver_match.app_names and 'order' in request.resolver_match.url_name and 'create' not in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-receipt-cutoff"></i>
+                <span>Sales Orders</span>
+            </a>
+            <a href="{% url 'sales:create_order' %}" class="nav-link {% if 'create_order' in request.resolver_match.url_name %}active{% endif %}" style="color: #38BDF8;">
+                <i class="bi bi-plus-circle-fill text-info"></i>
+                <span class="fw-bold">Field Order Entry</span>
+            </a>
+            <a href="{% url 'billing:invoice_list' %}" class="nav-link {% if 'billing' in request.resolver_match.app_names and 'invoice' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>GST Tax Invoices</span>
+            </a>
+            <a href="{% url 'billing:credit_note_list' %}" class="nav-link {% if 'credit_note' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-arrow-return-left"></i>
+                <span>Credit Notes</span>
+            </a>
+
+            <!-- Manufacturing & Operations -->
+            <div class="nav-section-title">Manufacturing</div>
+            <a href="{% url 'production:run_list' %}" class="nav-link {% if 'production' in request.resolver_match.app_names and 'create' not in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-gear-wide-connected"></i>
+                <span>Production Runs</span>
+            </a>
+            <a href="{% url 'production:create_run' %}" class="nav-link {% if 'create_run' in request.resolver_match.url_name %}active{% endif %}" style="color: #2DD4BF;">
+                <i class="bi bi-play-circle-fill text-teal"></i>
+                <span>Log Batch Output</span>
+            </a>
+            <a href="{% url 'bom:bom_list' %}" class="nav-link {% if 'bom' in request.resolver_match.app_names %}active{% endif %}">
+                <i class="bi bi-journal-check"></i>
+                <span>Recipe BOMs</span>
+            </a>
+            <a href="{% url 'purchases:purchase_list' %}" class="nav-link {% if 'purchases' in request.resolver_match.app_names %}active{% endif %}">
+                <i class="bi bi-cart-check"></i>
+                <span>Purchase Inwards</span>
+            </a>
+            <a href="{% url 'inventory:stock_overview' %}" class="nav-link {% if 'inventory' in request.resolver_match.app_names and 'overview' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-boxes"></i>
+                <span>Stock Overview</span>
+            </a>
+            <a href="{% url 'inventory:stock_ledger' %}" class="nav-link {% if 'ledger' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-journal-text"></i>
+                <span>Stock Ledger</span>
+            </a>
+
+            <!-- Finance & Reports -->
+            <div class="nav-section-title">Finance & Compliance</div>
+            <a href="{% url 'payments:payment_list' %}" class="nav-link {% if 'payments' in request.resolver_match.app_names and 'ageing' not in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-cash-stack"></i>
+                <span>Collections / Payments</span>
+            </a>
+            <a href="{% url 'payments:ageing_report' %}" class="nav-link {% if 'ageing' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-clock-history"></i>
+                <span>Receivables Ageing</span>
+            </a>
+            <a href="{% url 'reports:report_hub' %}" class="nav-link {% if 'reports' in request.resolver_match.app_names %}active{% endif %}">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+                <span>16 Audit Reports</span>
+            </a>
+            <a href="{% url 'audit:audit_log_list' %}" class="nav-link {% if 'audit' in request.resolver_match.app_names %}active{% endif %}">
+                <i class="bi bi-shield-check"></i>
+                <span>Audit Trail</span>
+            </a>
+
+            <!-- Master Data -->
+            <div class="nav-section-title">Configuration</div>
+            <a href="{% url 'masters:product_list' %}" class="nav-link {% if 'masters' in request.resolver_match.app_names %}active{% endif %}">
+                <i class="bi bi-database"></i>
+                <span>Master Catalog</span>
+            </a>
+        </div>
+
+        <!-- System Status Footer -->
+        <div class="sidebar-footer">
+            <div class="d-flex align-items-center justify-content-between mb-1">
+                <span class="text-white-50 small">System State</span>
+                <span class="d-flex align-items-center gap-1 text-success fw-semibold" style="font-size: 0.7rem;">
+                    <span class="spinner-grow spinner-grow-sm text-success" style="width: 8px; height: 8px;" role="status"></span>
+                    Online
+                </span>
+            </div>
+            <div class="text-secondary" style="font-size: 0.68rem;">
+                {{ company.NAME|default:"FactoryFlow Foods Ltd." }}
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Container -->
+    <div class="main-wrapper">
+        <!-- Top SaaS Navbar -->
+        <header class="top-navbar">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-sm btn-light border d-lg-none" id="sidebarToggle" aria-label="Toggle Sidebar">
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <h5 class="mb-0 fw-bold text-dark brand-font">{% block page_title %}Dashboard{% endblock %}</h5>
+                    </div>
+                    <small class="text-muted d-none d-sm-inline">
+                        <i class="bi bi-geo-alt me-1 text-primary"></i>Factory: {{ company.STATE|default:"Tamil Nadu" }} (State Code: {{ company.STATE_CODE|default:"33" }})
+                    </small>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 gap-sm-3">
+                <!-- Quick Global Action Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-primary fw-semibold px-3 py-1 d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-plus-lg"></i>
+                        <span class="d-none d-md-inline">New Action</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-1" style="font-size: 0.85rem;">
+                        <li><h6 class="dropdown-header text-uppercase text-muted" style="font-size: 0.7rem;">Quick Entry</h6></li>
+                        <li><a class="dropdown-item py-2" href="{% url 'sales:create_order' %}"><i class="bi bi-cart-plus me-2 text-primary"></i>New Sales Order</a></li>
+                        <li><a class="dropdown-item py-2" href="{% url 'production:create_run' %}"><i class="bi bi-play-circle me-2 text-teal"></i>Log Production Batch</a></li>
+                        <li><a class="dropdown-item py-2" href="{% url 'purchases:create_purchase' %}"><i class="bi bi-truck me-2 text-success"></i>Inward Purchase GRN</a></li>
+                        <li><a class="dropdown-item py-2" href="{% url 'payments:create_payment' %}"><i class="bi bi-cash me-2 text-warning"></i>Receive Payment</a></li>
+                    </ul>
+                </div>
+
+                <!-- User Profile & Sign Out -->
+                <div class="dropdown">
+                    <button class="btn btn-light rounded-pill border p-1 pe-3 d-flex align-items-center gap-2" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                            {{ request.user.username|make_list|first|upper }}
+                        </div>
+                        <span class="small fw-semibold text-dark d-none d-sm-inline">{{ request.user.username }}</span>
+                        <i class="bi bi-chevron-down text-muted" style="font-size: 0.7rem;"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-1">
+                        <li>
+                            <div class="px-3 py-2 border-bottom">
+                                <div class="fw-bold text-dark">{{ request.user.get_full_name|default:request.user.username }}</div>
+                                <span class="badge bg-primary-subtle text-primary text-uppercase" style="font-size: 0.65rem;">{{ user_role }}</span>
+                            </div>
+                        </li>
+                        <li><a class="dropdown-item py-2" href="{% url 'reports:report_hub' %}"><i class="bi bi-bar-chart me-2 text-secondary"></i>Reports Hub</a></li>
+                        <li><a class="dropdown-item py-2" href="{% url 'audit:audit_log_list' %}"><i class="bi bi-shield-check me-2 text-secondary"></i>Audit Log</a></li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <form action="{% url 'accounts:logout' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item py-2 text-danger"><i class="bi bi-box-arrow-right me-2"></i>Sign Out</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        {% if messages %}
+        <div class="px-3 px-md-4 pt-3">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2 mb-2" role="alert">
+                {% if message.tags == 'success' %}
+                    <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                {% elif message.tags == 'danger' or message.tags == 'error' %}
+                    <i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i>
+                {% elif message.tags == 'warning' %}
+                    <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+                {% else %}
+                    <i class="bi bi-info-circle-fill text-primary fs-5"></i>
+                {% endif %}
+                <div class="small fw-medium">{{ message }}</div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Content Area -->
+        <main class="content-area">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-top py-3 px-4 text-center text-muted small mt-auto">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <span>&copy; 2026 FactoryFlow ERP &bull; Centre for Digital Infrastructure, NIT Tiruchirappalli</span>
+                <span>Statutory GST: Tamil Nadu (33) &bull; WAC Valuation Engine</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar (Shown on small screens) -->
+    <nav class="mobile-bottom-nav">
+        <a href="{% url 'dashboard' %}" class="nav-item-btn {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <i class="bi bi-grid-1x2"></i>
+            <span>Home</span>
+        </a>
+        <a href="{% url 'sales:order_list' %}" class="nav-item-btn {% if 'sales' in request.resolver_match.app_names and 'create' not in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-receipt"></i>
+            <span>Orders</span>
+        </a>
+        <a href="{% url 'sales:create_order' %}" class="nav-item-btn cta-btn" title="Book Order">
+            <i class="bi bi-plus-lg"></i>
+        </a>
+        <a href="{% url 'inventory:stock_overview' %}" class="nav-item-btn {% if 'inventory' in request.resolver_match.app_names %}active{% endif %}">
+            <i class="bi bi-boxes"></i>
+            <span>Stock</span>
+        </a>
+        <a href="{% url 'reports:report_hub' %}" class="nav-item-btn {% if 'reports' in request.resolver_match.app_names %}active{% endif %}">
+            <i class="bi bi-file-earmark-bar-graph"></i>
+            <span>Reports</span>
+        </a>
+    </nav>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sidebar Toggle for Mobile Devices
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('show');
+            sidebarBackdrop.classList.toggle('show');
+        }
+
+        sidebarToggle?.addEventListener('click', toggleSidebar);
+        sidebarBackdrop?.addEventListener('click', toggleSidebar);
+
+        // Universal Client-side Quick Table Search Filter
+        document.querySelectorAll('[data-table-search]').forEach(input => {
+            input.addEventListener('input', function() {
+                const targetSelector = this.getAttribute('data-table-search');
+                const query = this.value.toLowerCase().trim();
+                const table = document.querySelector(targetSelector);
+                if (!table) return;
+
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

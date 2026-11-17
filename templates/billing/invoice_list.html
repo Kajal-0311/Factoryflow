@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block page_title %}GST Tax Invoices Register{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <h4 class="fw-bold mb-1 brand-font text-dark">GST Tax Invoices Register</h4>
+            <p class="text-muted small mb-0">Statutory tax invoices complying with Indian GST rules (Intra-state CGST+SGST vs Interstate IGST).</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'billing:credit_note_list' %}" class="btn btn-outline-secondary d-flex align-items-center gap-1">
+                <i class="bi bi-journal-arrow-down"></i> Credit Notes
+            </a>
+            <a href="{% url 'sales:order_list' %}" class="btn btn-primary fw-bold d-flex align-items-center gap-1">
+                <i class="bi bi-cart3"></i> Sales Pipeline
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Search & Filter Bar -->
+    <div class="card card-custom mb-3 shadow-sm border-0">
+        <div class="card-body p-3">
+            <div class="row g-2 align-items-center justify-content-between">
+                <div class="col-12 col-md-5">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" placeholder="Search invoice number, client, state..." data-table-search="#invoicesTable">
+                    </div>
+                </div>
+                <div class="col-12 col-md-5 text-md-end text-muted small">
+                    <span class="badge bg-light text-secondary border me-1"><i class="bi bi-info-circle me-1"></i>State: Tamil Nadu (33)</span>
+                    <span class="badge bg-primary-subtle text-primary fw-bold">HSN: 1905</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoices Data Table -->
+    <div class="card card-custom shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-modern" id="invoicesTable">
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Billed Customer</th>
+                        <th>Date</th>
+                        <th>Tax Regime</th>
+                        <th class="text-end">Taxable (₹)</th>
+                        <th class="text-end">CGST (₹)</th>
+                        <th class="text-end">SGST (₹)</th>
+                        <th class="text-end">IGST (₹)</th>
+                        <th class="text-end">Grand Total</th>
+                        <th class="text-end">Outstanding</th>
+                        <th>Fulfilment</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inv in invoices %}
+                    <tr>
+                        <td class="fw-bold text-primary font-monospace">
+                            <a href="{% url 'billing:invoice_detail' inv.id %}" class="text-decoration-none">
+                                {{ inv.invoice_number }}
+                            </a>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ inv.customer.name }}</div>
+                            <small class="text-muted">{{ inv.state }} &bull; GSTIN: {{ inv.customer_gstin|default:"Unregistered" }}</small>
+                        </td>
+                        <td class="text-muted small">{{ inv.invoice_date|date:"d-M-Y" }}</td>
+                        <td>
+                            {% if inv.is_interstate %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis fw-bold">Interstate (IGST)</span>
+                            {% else %}
+                                <span class="badge bg-success-subtle text-success fw-bold">Intra-State (TN)</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-semibold">₹ {{ inv.taxable_amount|floatformat:2|intcomma }}</td>
+                        <td class="text-end">₹ {{ inv.cgst_amount|floatformat:2|intcomma }}</td>
+                        <td class="text-end">₹ {{ inv.sgst_amount|floatformat:2|intcomma }}</td>
+                        <td class="text-end">₹ {{ inv.igst_amount|floatformat:2|intcomma }}</td>
+                        <td class="text-end fw-bold text-dark fs-6">₹ {{ inv.grand_total|floatformat:2|intcomma }}</td>
+                        <td class="text-end fw-bold {% if inv.outstanding_amount > 0 %}text-danger{% else %}text-success{% endif %}">
+                            ₹ {{ inv.outstanding_amount|floatformat:2|intcomma }}
+                        </td>
+                        <td>
+                            {% if inv.is_dispatched %}
+                                <span class="badge-status badge-status-dispatched">Dispatched</span>
+                            {% else %}
+                                <span class="badge-status badge-status-pending">Ready</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'billing:invoice_detail' inv.id %}" class="btn btn-light border py-1 px-2" title="View Invoice">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'billing:download_pdf' inv.id %}" class="btn btn-outline-primary py-1 px-2" title="Download ReportLab PDF">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="12" class="text-center py-5 text-muted">
+                            <i class="bi bi-receipt fs-1 d-block text-secondary mb-2"></i>
+                            <div class="fw-bold">No tax invoices generated yet.</div>
+                            <p class="small text-muted">Invoices are automatically created upon approved sales orders.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

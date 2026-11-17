@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ report.name }} (Report #{{ report.id }}){% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{% url 'reports:report_hub' %}">Reports Portal</a></li>
+                    <li class="breadcrumb-item active">{{ report.name }}</li>
+                </ol>
+            </nav>
+            <h5 class="fw-bold mb-0">Report #{{ report.id }}: {{ report.name }}</h5>
+            <small class="text-muted">{{ report.desc }}</small>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="?{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}export=excel" class="btn btn-outline-success fw-semibold">
+                <i class="bi bi-file-earmark-excel me-1"></i> Excel (.xlsx)
+            </a>
+            <a href="?{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}export=csv" class="btn btn-outline-secondary fw-semibold">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV
+            </a>
+            <a href="?{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}export=pdf" class="btn btn-outline-danger fw-semibold">
+                <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Form Bar -->
+    <div class="card card-custom mb-4">
+        <div class="card-body p-3">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-secondary mb-1">From Date</label>
+                    <input type="date" name="start_date" class="form-control form-control-sm" value="{{ start_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-secondary mb-1">To Date</label>
+                    <input type="date" name="end_date" class="form-control form-control-sm" value="{{ end_date }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2" style="margin-top: 24px;">
+                    <button type="submit" class="btn btn-sm btn-dark px-3">Apply Date Filter</button>
+                    <a href="{% url 'reports:view_report' report.id %}" class="btn btn-sm btn-outline-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- GSTR Disclaimer if Report 4 -->
+    {% if is_gst_summary %}
+    <div class="alert alert-warning border-warning small py-2 px-3 mb-4 d-flex align-items-center gap-2">
+        <i class="bi bi-info-circle-fill text-warning fs-5"></i>
+        <span><strong>Regulatory Notice:</strong> This GST Outward Supply Summary is an internal ERP prototype reconciliation report designed for GSTR-1 (Table 4 & 5) and GSTR-3B preparation. It is NOT an official government-filed tax return.</span>
+    </div>
+    {% endif %}
+
+    <!-- Report Table -->
+    <div class="card card-custom">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                <thead class="table-light">
+                    <tr>
+                        {% for h in headers %}
+                        <th class="{% if '₹' in h or 'Qty' in h or 'Total' in h or 'Rate' in h or 'Stock' in h or 'Cost' in h or 'Taxable' in h %}text-end{% endif %}">
+                            {{ h }}
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr class="{% if 'TOTAL' in row.0 %}table-light fw-bold{% endif %}">
+                        {% for cell in row %}
+                        <td class="{% if forloop.counter > 2 %}text-end{% endif %}">
+                            {{ cell }}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{{ headers|length }}" class="text-center py-4 text-muted">No records found for the selected criteria.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

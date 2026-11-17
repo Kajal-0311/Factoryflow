@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block page_title %}Master Data Catalog{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header with Tabs -->
+    <div class="card card-custom mb-4">
+        <div class="card-header border-bottom-0 pb-0">
+            <ul class="nav nav-tabs card-header-tabs" id="catalogTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'products' %}active{% endif %}" data-bs-toggle="tab" href="#products">
+                        <i class="bi bi-box-seam me-1"></i> Products ({{ products.count }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'customers' %}active{% endif %}" data-bs-toggle="tab" href="#customers">
+                        <i class="bi bi-people me-1"></i> Customers ({{ customers.count }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'suppliers' %}active{% endif %}" data-bs-toggle="tab" href="#suppliers">
+                        <i class="bi bi-truck me-1"></i> Suppliers ({{ suppliers.count }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'raw_materials' %}active{% endif %}" data-bs-toggle="tab" href="#raw_materials">
+                        <i class="bi bi-egg-fried me-1"></i> Raw Materials ({{ raw_materials.count }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'packaging' %}active{% endif %}" data-bs-toggle="tab" href="#packaging">
+                        <i class="bi bi-box me-1"></i> Packaging ({{ packaging_materials.count }})
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body">
+            <div class="tab-content" id="catalogTabContent">
+                <!-- Products Tab -->
+                <div class="tab-pane fade {% if active_tab == 'products' %}show active{% endif %}" id="products">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Product Name</th>
+                                    <th>Category</th>
+                                    <th>Pack Size</th>
+                                    <th>HSN Code</th>
+                                    <th>GST %</th>
+                                    <th class="text-end">Selling Price</th>
+                                    <th class="text-end">Current Stock</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in products %}
+                                <tr>
+                                    <td class="fw-semibold">{{ p.product_code }}</td>
+                                    <td><strong>{{ p.name }}</strong></td>
+                                    <td>{{ p.category.name }}</td>
+                                    <td>{{ p.pack_size }}</td>
+                                    <td><code>{{ p.hsn_code }}</code></td>
+                                    <td>{{ p.gst_rate }}%</td>
+                                    <td class="text-end fw-bold">₹ {{ p.selling_price|floatformat:2 }}</td>
+                                    <td class="text-end fw-semibold text-primary">{{ p.current_stock|floatformat:0 }} pkts</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Customers Tab -->
+                <div class="tab-pane fade {% if active_tab == 'customers' %}show active{% endif %}" id="customers">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Customer Name</th>
+                                    <th>Type</th>
+                                    <th>GSTIN</th>
+                                    <th>State & Code</th>
+                                    <th>Phone / Email</th>
+                                    <th>Interstate?</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in customers %}
+                                <tr>
+                                    <td class="fw-semibold">{{ c.customer_code }}</td>
+                                    <td><strong>{{ c.name }}</strong></td>
+                                    <td><span class="badge bg-info text-dark">{{ c.get_customer_type_display }}</span></td>
+                                    <td><code>{{ c.gstin|default:"Unregistered" }}</code></td>
+                                    <td>{{ c.state }} ({{ c.state_code }})</td>
+                                    <td>{{ c.phone }}<br/><small class="text-muted">{{ c.email }}</small></td>
+                                    <td>
+                                        {% if c.is_interstate %}
+                                            <span class="badge bg-warning text-dark">Interstate (IGST)</span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark border">Intra-State (TN)</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Suppliers Tab -->
+                <div class="tab-pane fade {% if active_tab == 'suppliers' %}show active{% endif %}" id="suppliers">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Supplier Name</th>
+                                    <th>GSTIN</th>
+                                    <th>State</th>
+                                    <th>Contact</th>
+                                    <th>Address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in suppliers %}
+                                <tr>
+                                    <td class="fw-semibold">{{ s.supplier_code }}</td>
+                                    <td><strong>{{ s.name }}</strong></td>
+                                    <td><code>{{ s.gstin }}</code></td>
+                                    <td>{{ s.state }}</td>
+                                    <td>{{ s.phone }}<br/><small class="text-muted">{{ s.email }}</small></td>
+                                    <td><small>{{ s.address }}</small></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Raw Materials Tab -->
+                <div class="tab-pane fade {% if active_tab == 'raw_materials' %}show active{% endif %}" id="raw_materials">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Material Name</th>
+                                    <th>UOM</th>
+                                    <th class="text-end">Current Stock</th>
+                                    <th class="text-end">Reorder Level</th>
+                                    <th class="text-end">Weighted Avg Cost (WAC)</th>
+                                    <th>Health</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rm in raw_materials %}
+                                <tr>
+                                    <td class="fw-semibold">{{ rm.material_code }}</td>
+                                    <td><strong>{{ rm.name }}</strong></td>
+                                    <td>{{ rm.uom.code }}</td>
+                                    <td class="text-end fw-bold">{{ rm.current_stock|floatformat:3 }} {{ rm.uom.code }}</td>
+                                    <td class="text-end text-muted">{{ rm.reorder_level|floatformat:1 }} {{ rm.uom.code }}</td>
+                                    <td class="text-end text-teal fw-bold">₹ {{ rm.weighted_average_cost|floatformat:4 }}</td>
+                                    <td>
+                                        {% if rm.is_low_stock %}
+                                            <span class="badge bg-danger">Low Stock</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Adequate</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Packaging Materials Tab -->
+                <div class="tab-pane fade {% if active_tab == 'packaging' %}show active{% endif %}" id="packaging">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Packaging Name</th>
+                                    <th>Type</th>
+                                    <th>UOM</th>
+                                    <th class="text-end">Current Stock</th>
+                                    <th class="text-end">Purchase Rate</th>
+                                    <th>Health</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pm in packaging_materials %}
+                                <tr>
+                                    <td class="fw-semibold">{{ pm.material_code }}</td>
+                                    <td><strong>{{ pm.name }}</strong></td>
+                                    <td><span class="badge bg-light text-dark border">{{ pm.get_packaging_type_display }}</span></td>
+                                    <td>{{ pm.uom.code }}</td>
+                                    <td class="text-end fw-bold">{{ pm.current_stock|floatformat:0 }} {{ pm.uom.code }}</td>
+                                    <td class="text-end fw-semibold">₹ {{ pm.purchase_rate|floatformat:2 }}</td>
+                                    <td>
+                                        {% if pm.is_low_stock %}
+                                            <span class="badge bg-danger">Low Stock</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Adequate</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

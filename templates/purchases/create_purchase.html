@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block page_title %}New Purchase Inward Entry{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 800px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h5 class="fw-bold mb-1">Record Material Purchase Inward</h5>
+            <small class="text-muted">Enter procurement details to increment stock and recalculate weighted average costs.</small>
+        </div>
+        <a href="{% url 'purchases:purchase_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Register
+        </a>
+    </div>
+
+    <form method="post" action="{% url 'purchases:create_purchase' %}">
+        {% csrf_token %}
+
+        <!-- Supplier & Reference -->
+        <div class="card card-custom mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-truck me-2 text-primary"></i>Supplier & Invoice Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Supplier *</label>
+                        <select name="supplier_id" class="form-select" required>
+                            <option value="">-- Choose Supplier --</option>
+                            {% for s in suppliers %}
+                            <option value="{{ s.id }}">{{ s.name }} ({{ s.state }} - {{ s.gstin }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Supplier Invoice / Challan Number</label>
+                        <input type="text" name="supplier_invoice_ref" class="form-control" placeholder="e.g. SUP-INV-9821" value="SUP-INV-9821">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Purchase Date</label>
+                        <input type="date" name="purchase_date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Notes / Gate Inward Ref</label>
+                        <input type="text" name="notes" class="form-control" placeholder="PO reference or batch delivery notes">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Material Item Details -->
+        <div class="card card-custom mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-box me-2 text-teal"></i>Item Inward Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Item Category *</label>
+                        <select name="item_type" id="itemTypeSelect" class="form-select" required>
+                            <option value="RAW_MATERIAL">Raw Material (Flour, Oil, Spices...)</option>
+                            <option value="PACKAGING_MATERIAL">Packaging Material (Pouches, Cartons...)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold">Select Material *</label>
+                        <select name="material_id" id="materialSelect" class="form-select" required>
+                            <optgroup label="Raw Materials" id="rmGroup">
+                                {% for rm in raw_materials %}
+                                <option value="{{ rm.id }}" data-rate="{{ rm.purchase_rate }}">{{ rm.name }} (Current WAC: ₹{{ rm.weighted_average_cost }}/{{ rm.uom.code }})</option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Packaging Materials" id="pmGroup" class="d-none">
+                                {% for pm in packaging_materials %}
+                                <option value="{{ pm.id }}" data-rate="{{ pm.purchase_rate }}">{{ pm.name }} (Current Rate: ₹{{ pm.purchase_rate }}/{{ pm.uom.code }})</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Quantity Inward *</label>
+                        <input type="number" step="0.001" name="quantity" id="qtyInput" class="form-control fw-bold" placeholder="e.g. 60" value="60" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Purchase Rate (₹ / UOM) *</label>
+                        <input type="number" step="0.0001" name="purchase_rate" id="rateInput" class="form-control fw-bold" placeholder="e.g. 45.00" value="45.00" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">GST Rate (%)</label>
+                        <input type="number" step="0.01" name="gst_rate" id="gstInput" class="form-control" value="5.00" required>
+                    </div>
+                </div>
+
+                <!-- Live Computed Totals -->
+                <div class="p-3 bg-light rounded mt-3 border">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted small">Taxable Amount:</span>
+                        <strong id="dispTaxable">₹ 2,700.00</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted small">GST (5%):</span>
+                        <strong id="dispGst" class="text-muted">₹ 135.00</strong>
+                    </div>
+                    <hr class="my-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Total Inward Value:</span>
+                        <span class="fw-bold fs-5 text-teal" id="dispTotal">₹ 2,835.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm Option -->
+        <div class="card card-custom mb-4 p-3 bg-white">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="confirm_now" value="1" id="confirmNowCheck" checked>
+                <label class="form-check-label fw-bold" for="confirmNowCheck">
+                    Confirm Immediately upon Saving (Automatically add to stock & update WAC)
+                </label>
+            </div>
+            <small class="text-muted ps-4">Uncheck if you want to save as a draft for warehouse physical verification first.</small>
+        </div>
+
+        <div class="d-grid mb-5">
+            <button type="submit" class="btn btn-dark btn-lg py-3 fw-bold" style="background-color: #0F172A;">
+                <i class="bi bi-check2-circle me-2"></i> Save Purchase Entry
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const itemTypeSelect = document.getElementById('itemTypeSelect');
+    const rmGroup = document.getElementById('rmGroup');
+    const pmGroup = document.getElementById('pmGroup');
+    const qtyInput = document.getElementById('qtyInput');
+    const rateInput = document.getElementById('rateInput');
+    const gstInput = document.getElementById('gstInput');
+
+    itemTypeSelect.addEventListener('change', function() {
+        if (this.value === 'RAW_MATERIAL') {
+            rmGroup.classList.remove('d-none');
+            pmGroup.classList.add('d-none');
+        } else {
+            rmGroup.classList.add('d-none');
+            pmGroup.classList.remove('d-none');
+        }
+    });
+
+    function calc() {
+        const q = parseFloat(qtyInput.value) || 0;
+        const r = parseFloat(rateInput.value) || 0;
+        const g = parseFloat(gstInput.value) || 0;
+
+        const taxable = q * r;
+        const gst = taxable * (g / 100.0);
+        const total = taxable + gst;
+
+        document.getElementById('dispTaxable').textContent = '₹ ' + taxable.toFixed(2);
+        document.getElementById('dispGst').textContent = '₹ ' + gst.toFixed(2);
+        document.getElementById('dispTotal').textContent = '₹ ' + total.toFixed(2);
+    }
+
+    qtyInput.addEventListener('input', calc);
+    rateInput.addEventListener('input', calc);
+    gstInput.addEventListener('input', calc);
+    calc();
+});
+</script>
+{% endblock %}

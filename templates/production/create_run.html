@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Record Production Run - FactoryFlow ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h2 class="mb-1 text-slate-800 font-bold"><i class="bi bi-gear-wide-connected text-primary me-2"></i>Record Production Run</h2>
+        <p class="text-muted mb-0">Record recipe execution, compare planned vs actual consumption, track variances, and calculate batch costing.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a href="{% url 'production:run_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Production Runs
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-4">
+        <form method="GET" class="row g-3 align-items-end mb-4 pb-3 border-bottom">
+            <div class="col-md-6">
+                <label class="form-label font-medium text-slate-700">Select Finished Product to Produce</label>
+                <select name="product_id" class="form-select" onchange="this.form.submit()">
+                    {% for p in products %}
+                    <option value="{{ p.id }}" {% if p.id == selected_product_id %}selected{% endif %}>
+                        {{ p.name }} ({{ p.pack_size }}) - Current Stock: {{ p.current_stock }} pkts
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6 text-muted small">
+                <i class="bi bi-info-circle me-1 text-primary"></i> Selecting a product dynamically loads its active Bill of Materials (BOM) standard recipe and material stock balances.
+            </div>
+        </form>
+
+        {% if bom and requirements %}
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="product_id" value="{{ selected_product_id }}">
+
+            <!-- Batch Header Parameters -->
+            <div class="row g-3 mb-4 p-3 bg-light rounded-3 border">
+                <div class="col-md-3">
+                    <label class="form-label font-medium text-slate-700">Production Date</label>
+                    <input type="date" name="production_date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label font-medium text-slate-700">Planned Batch Quantity (pkts)</label>
+                    <input type="number" step="1" name="batch_quantity" id="batch_quantity" class="form-control font-bold" value="{{ bom.batch_size }}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label font-medium text-slate-700">Actual Good Output (pkts)</label>
+                    <input type="number" step="1" name="actual_good_output" id="actual_good_output" class="form-control text-success font-bold" value="188" required oninput="calcYieldVariance()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label font-medium text-slate-700">Wastage / Scrap Packets</label>
+                    <input type="number" step="1" name="wastage_quantity" id="wastage_quantity" class="form-control text-danger" value="12" oninput="calcYieldVariance()">
+                </div>
+                <div class="col-12 mt-2">
+                    <div id="yield_alert_banner" class="alert alert-warning py-2 mb-0 d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                        <div>
+                            <strong>Yield Variance: </strong><span id="yield_var_disp">-6.00%</span>
+                            <span class="badge bg-danger ms-2" id="yield_badge">Variance Alert Active (&gt; 3%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Raw Materials Consumption Table -->
+            <div class="card border mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="mb-0 text-slate-800 font-bold"><i class="bi bi-basket me-2 text-primary"></i>1. Raw Material Recipe Consumption</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Raw Material</th>
+                                <th>Available Stock</th>
+                                <th>Planned Standard</th>
+                                <th>Actual Consumed</th>
+                                <th>Unit Rate (WAC)</th>
+                                <th>Variance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rm in requirements.raw_materials %}
+                            <tr>
+                                <td class="font-medium">
+                                    {{ rm.name }}
+                                    <input type="hidden" name="planned_rm_{{ rm.material_id }}" value="{{ rm.planned_quantity }}">
+                                </td>
+                                <td>
+                                    <span class="badge {% if rm.current_stock < rm.planned_quantity %}bg-danger{% else %}bg-secondary{% endif %}">
+                                        {{ rm.current_stock }} {{ rm.uom }}
+                                    </span>
+                                </td>
+                                <td>{{ rm.planned_quantity }} {{ rm.uom }}</td>
+                                <td style="max-width: 150px;">
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="0.001" name="actual_rm_{{ rm.material_id }}" 
+                                               class="form-control rm-input font-bold" 
+                                               data-plan="{{ rm.planned_quantity }}"
+                                               value="{% if 'Oil' in rm.name %}10.500{% else %}{{ rm.planned_quantity }}{% endif %}" 
+                                               required oninput="calcItemVariance(this)">
+                                        <span class="input-group-text">{{ rm.uom }}</span>
+                                    </div>
+                                </td>
+                                <td>₹{{ rm.unit_rate }}/{{ rm.uom }}</td>
+                                <td class="item-var-cell font-monospace">
+                                    {% if 'Oil' in rm.name %}
+                                        <span class="badge bg-warning text-dark">+5.00% (Alert)</span>
+                                    {% else %}
+                                        <span class="badge bg-success">0.00%</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Packaging Material Consumption Table -->
+            <div class="card border mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="mb-0 text-slate-800 font-bold"><i class="bi bi-box-seam me-2 text-primary"></i>2. Packaging Consumption & Damaged Pouches</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Packaging Item</th>
+                                <th>Available Stock</th>
+                                <th>Planned Standard</th>
+                                <th>Actual Consumed</th>
+                                <th>Damaged / Scrap</th>
+                                <th>Unit Rate</th>
+                                <th>Variance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pm in requirements.packaging_materials %}
+                            <tr>
+                                <td class="font-medium">
+                                    {{ pm.name }}
+                                    <input type="hidden" name="planned_pm_{{ pm.material_id }}" value="{{ pm.planned_quantity }}">
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ pm.current_stock }} {{ pm.uom }}</span>
+                                </td>
+                                <td>{{ pm.planned_quantity }} {{ pm.uom }}</td>
+                                <td style="max-width: 150px;">
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="0.001" name="actual_pm_{{ pm.material_id }}" 
+                                               class="form-control pm-input font-bold"
+                                               data-plan="{{ pm.planned_quantity }}"
+                                               value="{% if 'pouch' in pm.name|lower %}194.000{% elif 'carton' in pm.name|lower %}9.000{% else %}{{ pm.planned_quantity }}{% endif %}" 
+                                               required oninput="calcItemVariance(this)">
+                                        <span class="input-group-text">{{ pm.uom }}</span>
+                                    </div>
+                                </td>
+                                <td style="max-width: 140px;">
+                                    {% if 'pouch' in pm.name|lower %}
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="1" name="damaged_pm_{{ pm.material_id }}" class="form-control text-danger font-bold" value="6">
+                                        <span class="input-group-text">pcs</span>
+                                    </div>
+                                    {% else %}
+                                    <input type="hidden" name="damaged_pm_{{ pm.material_id }}" value="0">
+                                    <span class="text-muted small">0 pcs</span>
+                                    {% endif %}
+                                </td>
+                                <td>₹{{ pm.unit_rate }}/{{ pm.uom }}</td>
+                                <td class="item-var-cell font-monospace">
+                                    {% if 'pouch' in pm.name|lower %}
+                                        <span class="badge bg-success">-3.00%</span>
+                                    {% elif 'carton' in pm.name|lower %}
+                                        <span class="badge bg-warning text-dark">-10.00% (Alert)</span>
+                                    {% else %}
+                                        <span class="badge bg-success">0.00%</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Overheads & Costing -->
+            <div class="card border mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="mb-0 text-slate-800 font-bold"><i class="bi bi-cash-stack me-2 text-primary"></i>3. Direct Labour & Operating Overheads</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label font-medium text-slate-700">Direct Labour Cost (₹)</label>
+                            <input type="number" step="0.01" name="overhead_labour" class="form-control font-bold" value="1200.00" required>
+                            <small class="text-muted">Wages for mixing, frying, and packing team</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label font-medium text-slate-700">Power & Fuel (LPG/Electricity) (₹)</label>
+                            <input type="number" step="0.01" name="overhead_power_gas" class="form-control font-bold" value="600.00" required>
+                            <small class="text-muted">Commercial LPG cylinder and power meter usage</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes & Submission -->
+            <div class="card border mb-4">
+                <div class="card-body">
+                    <label class="form-label font-medium text-slate-700">Supervisor Notes & Remarks</label>
+                    <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Minor oil absorption variance due to new flour batch; 6 pouches rejected due to heat sealer defect.">Benchmark Batch Run: 188 pkts good output, 6 damaged pouches, 12 burnt scrap.</textarea>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{% url 'production:run_list' %}" class="btn btn-secondary px-4">Cancel</a>
+                <button type="submit" class="btn btn-primary px-5 font-bold">
+                    <i class="bi bi-check-circle me-1"></i> Post Production Run & Stock
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i> No active Bill of Materials (BOM) found for this product. Please configure a BOM first.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function calcYieldVariance() {
+    const plan = parseFloat(document.getElementById('batch_quantity').value) || 200;
+    const actual = parseFloat(document.getElementById('actual_good_output').value) || 0;
+    const diff = actual - plan;
+    const pct = ((diff / plan) * 100).toFixed(2);
+    
+    const disp = document.getElementById('yield_var_disp');
+    const badge = document.getElementById('yield_badge');
+    const banner = document.getElementById('yield_alert_banner');
+
+    disp.textContent = (pct >= 0 ? '+' : '') + pct + '%';
+    if (Math.abs(pct) > 3.00) {
+        badge.style.display = 'inline-block';
+        banner.className = 'alert alert-warning py-2 mb-0 d-flex align-items-center';
+    } else {
+        badge.style.display = 'none';
+        banner.className = 'alert alert-success py-2 mb-0 d-flex align-items-center';
+    }
+}
+
+function calcItemVariance(input) {
+    const plan = parseFloat(input.getAttribute('data-plan')) || 1;
+    const actual = parseFloat(input.value) || 0;
+    const pct = (((actual - plan) / plan) * 100).toFixed(2);
+    const cell = input.closest('tr').querySelector('.item-var-cell');
+    
+    if (Math.abs(pct) > 3.00) {
+        cell.innerHTML = '<span class="badge bg-warning text-dark">' + (pct >= 0 ? '+' : '') + pct + '% (Alert)</span>';
+    } else {
+        cell.innerHTML = '<span class="badge bg-success">' + (pct >= 0 ? '+' : '') + pct + '%</span>';
+    }
+}
+</script>
+{% endblock %}

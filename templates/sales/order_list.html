@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block page_title %}Sales Orders Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <h4 class="fw-bold mb-1 brand-font text-dark">Sales Order Pipeline</h4>
+            <p class="text-muted small mb-0">Track field orders from submission, administrative verification, GST invoicing to warehouse dispatch.</p>
+        </div>
+        <a href="{% url 'sales:create_order' %}" class="btn btn-primary fw-bold px-3 py-2 shadow-sm d-flex align-items-center gap-2">
+            <i class="bi bi-plus-lg"></i>
+            <span>Take New Order</span>
+        </a>
+    </div>
+
+    <!-- Quick Status Pill Filter Bar -->
+    <div class="card card-custom mb-3 shadow-sm border-0">
+        <div class="card-body p-3">
+            <form method="get" class="row g-2 align-items-center">
+                <!-- Search -->
+                <div class="col-12 col-md-4">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" placeholder="Quick filter orders..." data-table-search="#salesOrdersTable">
+                    </div>
+                </div>
+
+                <!-- Status Filter Dropdown -->
+                <div class="col-6 col-md-3">
+                    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">All Statuses</option>
+                        {% for code, label in statuses %}
+                        <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Customer Filter Dropdown -->
+                <div class="col-6 col-md-3">
+                    <select name="customer" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">All Outlets</option>
+                        {% for c in customers %}
+                        <option value="{{ c.id }}" {% if selected_customer == c.id %}selected{% endif %}>{{ c.name }} ({{ c.state }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Reset -->
+                <div class="col-12 col-md-2 text-md-end">
+                    <a href="{% url 'sales:order_list' %}" class="btn btn-sm btn-outline-secondary w-100">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Orders Data Table -->
+    <div class="card card-custom shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-modern" id="salesOrdersTable">
+                <thead>
+                    <tr>
+                        <th>Order Number</th>
+                        <th>Customer / Outlet</th>
+                        <th>Salesman</th>
+                        <th>Date</th>
+                        <th>Taxable Value</th>
+                        <th>Grand Total</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in orders %}
+                    <tr>
+                        <td class="fw-bold text-primary font-monospace">
+                            <a href="{% url 'sales:order_detail' o.id %}" class="text-decoration-none">
+                                {{ o.order_number }}
+                            </a>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ o.customer.name }}</div>
+                            <small class="text-muted">
+                                <span class="badge bg-light text-secondary border me-1">{{ o.customer.get_customer_type_display }}</span>
+                                {{ o.customer.state }}
+                            </small>
+                        </td>
+                        <td>
+                            <div class="small fw-semibold text-dark">{{ o.salesman.get_full_name|default:o.salesman.username }}</div>
+                        </td>
+                        <td class="text-muted small">{{ o.order_date|date:"d-M-Y" }}</td>
+                        <td class="text-end fw-semibold">₹ {{ o.subtotal_amount|floatformat:2|intcomma }}</td>
+                        <td class="text-end fw-bold text-dark">₹ {{ o.grand_total|floatformat:2|intcomma }}</td>
+                        <td>
+                            <span class="badge-status badge-status-{{ o.status|lower }}">
+                                {{ o.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'sales:order_detail' o.id %}" class="btn btn-sm btn-light border py-1 px-2 fw-semibold" title="View Details">
+                                <i class="bi bi-eye me-1"></i> Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block text-secondary mb-2"></i>
+                            <div class="fw-bold">No sales orders found matching criteria.</div>
+                            <p class="small text-muted mb-3">Create your first field order or reset active search filters.</p>
+                            <a href="{% url 'sales:create_order' %}" class="btn btn-sm btn-primary">Take New Order</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

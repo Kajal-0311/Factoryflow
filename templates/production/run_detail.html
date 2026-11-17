@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block page_title %}Batch Run Details: {{ run.run_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{% url 'production:run_list' %}">Production Runs</a></li>
+                    <li class="breadcrumb-item active">{{ run.run_number }}</li>
+                </ol>
+            </nav>
+            <h5 class="fw-bold mb-0">{{ run.product.name }} &bull; Batch Run #{{ run.run_number }}</h5>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'production:run_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Runs
+            </a>
+            <a href="{% url 'production:create_run' %}?product_id={{ run.product.id }}" class="btn btn-primary fw-semibold">
+                <i class="bi bi-play-fill me-1"></i> Run Another Batch
+            </a>
+        </div>
+    </div>
+
+    <!-- Variance Alert Banner if applicable -->
+    {% if run.yield_alert %}
+    <div class="alert alert-danger border-danger d-flex align-items-center gap-2 mb-4 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-octagon-fill fs-4 text-danger"></i>
+        <div>
+            <strong class="d-block">Yield Variance Threshold Exceeded (> 3.0%)</strong>
+            <span>Actual good output of {{ run.actual_good_output|floatformat:0 }} pkts produced vs {{ run.expected_output|floatformat:0 }} expected results in a yield variance of <strong>{{ run.yield_variance_percent }}%</strong>.</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Top KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card card-custom p-3">
+                <small class="text-muted d-block">Actual Good Output</small>
+                <h4 class="fw-bold mb-0 text-dark">{{ run.actual_good_output|floatformat:0 }} <small class="fs-6 text-muted">/ {{ run.expected_output|floatformat:0 }} pkts</small></h4>
+                <small class="text-danger">Wastage: {{ run.wastage_quantity|floatformat:0 }} pkts</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-custom p-3">
+                <small class="text-muted d-block">Yield Variance %</small>
+                <h4 class="fw-bold mb-0 {% if run.yield_alert %}text-danger{% else %}text-success{% endif %}">
+                    {{ run.yield_variance_percent }}%
+                </h4>
+                <small class="text-muted">Tolerance: ±3.0%</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-custom p-3">
+                <small class="text-muted d-block">Unit Production Cost</small>
+                <h4 class="fw-bold mb-0 text-teal">₹ {{ costing.cost_per_packet|floatformat:2 }}</h4>
+                <small class="text-muted">Total Run Cost: ₹ {{ costing.total_production_cost|floatformat:2 }}</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-custom p-3">
+                <small class="text-muted d-block">Estimated Gross Margin</small>
+                <h4 class="fw-bold mb-0 text-success">₹ {{ costing.gross_margin_per_packet|floatformat:2 }}</h4>
+                <small class="text-muted">Selling Price: ₹ {{ costing.selling_price_per_packet|floatformat:2 }} ({{ costing.gross_margin_percent }}%)</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Consumption Breakdown Table -->
+    <div class="card card-custom mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-bold"><i class="bi bi-list-check me-2 text-teal"></i>Raw Material & Packaging Actual Consumption</h6>
+            <span class="badge bg-light text-dark border">Immutable Ledger Entries Logged</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Material Item</th>
+                        <th>Type</th>
+                        <th class="text-end">Planned Qty</th>
+                        <th class="text-end">Actual Consumed</th>
+                        <th class="text-end">Damaged / Scrap</th>
+                        <th class="text-end">Variance %</th>
+                        <th>Variance Status</th>
+                        <th class="text-end">Unit Rate (WAC)</th>
+                        <th class="text-end">Total Cost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in consumptions %}
+                    <tr>
+                        <td class="fw-semibold">{{ c.item_name }}</td>
+                        <td>
+                            {% if c.item_type == 'RAW_MATERIAL' %}
+                                <span class="badge bg-light text-dark border">Raw Material</span>
+                            {% else %}
+                                <span class="badge bg-light text-primary border">Packaging</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">{{ c.planned_quantity|floatformat:3 }} {{ c.uom_code }}</td>
+                        <td class="text-end fw-bold text-dark">{{ c.actual_quantity|floatformat:3 }} {{ c.uom_code }}</td>
+                        <td class="text-end text-danger">{{ c.damaged_quantity|floatformat:0 }}</td>
+                        <td class="text-end fw-bold {% if c.variance_alert %}text-danger{% else %}text-muted{% endif %}">
+                            {{ c.variance_percent }}%
+                        </td>
+                        <td>
+                            {% if c.variance_alert %}
+                                <span class="badge bg-danger">Alert (> 3%)</span>
+                            {% else %}
+                                <span class="badge bg-success">Within Limit</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">₹ {{ c.unit_rate|floatformat:4 }}</td>
+                        <td class="text-end fw-bold">₹ {{ c.total_cost|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Production Costing & Overhead Allocation Details -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card card-custom h-100">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-receipt me-2 text-primary"></i>Allocated Overheads</h6>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Overhead Category</th>
+                                <th>Description</th>
+                                <th class="text-end">Allocated Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ov in overheads %}
+                            <tr>
+                                <td class="fw-semibold">{{ ov.get_overhead_type_display }}</td>
+                                <td>{{ ov.description }}</td>
+                                <td class="text-end fw-bold">₹ {{ ov.amount|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted">No overheads recorded.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card card-custom h-100">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-calculator me-2 text-teal"></i>Costing Summary Engine</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush mb-0">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Direct Raw Material Cost:</span>
+                            <span class="fw-semibold">₹ {{ costing.raw_material_cost|floatformat:2 }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Packaging Material Cost (incl. damaged):</span>
+                            <span class="fw-semibold">₹ {{ costing.packaging_material_cost|floatformat:2 }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Allocated Direct Labour:</span>
+                            <span class="fw-semibold">₹ {{ costing.labour_cost|floatformat:2 }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Gas & Electricity Utilities:</span>
+                            <span class="fw-semibold">₹ {{ costing.power_and_gas_cost|floatformat:2 }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-light p-2 rounded mt-2">
+                            <span class="fw-bold">Total Batch Production Cost:</span>
+                            <span class="fw-bold text-dark fs-6">₹ {{ costing.total_production_cost|floatformat:2 }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-2">
+                            <span class="fw-bold text-teal">Cost Per Good Packet:</span>
+                            <span class="fw-bold text-teal fs-5">₹ {{ costing.cost_per_packet|floatformat:2 }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

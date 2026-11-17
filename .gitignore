@@ -1,0 +1,70 @@
+# ==============================================================================
+# .gitignore for FactoryFlow - Integrated Food Manufacturing ERP
+# Centre for Digital Infrastructure, NIT Tiruchirappalli
+# ==============================================================================
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments & Dependencies
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment Secrets & Local Config
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Databases
+*.sqlite3
+*.sqlite3-journal
+db.sqlite3
+
+# Static & Media Assets (Runtime generated)
+staticfiles/
+media/*
+!media/.gitkeep
+
+# Logs & Temporary Files
+*.log
+*.pot
+*.bak
+*.tmp
+*.temp
+
+# Unit test & coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# IDE & OS Artifacts
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Docker compose overrides
+docker-compose.override.yml
