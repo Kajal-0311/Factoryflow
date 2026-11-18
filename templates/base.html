@@ -17,18 +17,40 @@
 
     <style>
         :root {
-            --ff-primary: #0284C7;
-            --ff-primary-dark: #0369A1;
-            --ff-primary-light: #E0F2FE;
-            --ff-navy: #0B132B;
-            --ff-navy-dark: #070B19;
-            --ff-navy-light: #1C2541;
-            --ff-teal: #0D9488;
-            --ff-teal-light: #14B8A6;
-            --ff-slate: #64748B;
-            --ff-slate-light: #F1F5F9;
-            --ff-bg: #F8FAFC;
-            --ff-card-border: #E2E8F0;
+            /* Surfaces & Canvas */
+            --canvas: #F8FAFC;
+            --surface: #FFFFFF;
+            --surface-raised: #FFFFFF;
+            --border: #E2E8F0;
+            --border-subtle: #F1F5F9;
+
+            /* Typography Hierarchy */
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #64748B;
+
+            /* Dark Sidebar Neutral Tokens */
+            --sidebar-bg: #0F172A;
+            --sidebar-border: #1E293B;
+            --sidebar-text: #F8FAFC;
+            --sidebar-text-secondary: #CBD5E1;
+            --sidebar-text-muted: #94A3B8;
+
+            /* Interactive Brand Accent */
+            --color-primary: #0D6EFD;
+            --color-primary-hover: #0B61DF;
+
+            /* Semantic Feedback */
+            --color-success: #059669;
+            --color-warning: #D97706;
+            --color-error: #DC2626;
+
+            /* Standardized Border Radius Scale */
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 10px;
+            --radius-xl: 12px;
+
             --ff-sidebar-width: 260px;
         }
 
@@ -38,8 +60,8 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--ff-bg);
-            color: #1E293B;
+            background-color: var(--canvas);
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -50,6 +72,8 @@
         h1, h2, h3, h4, h5, h6, .brand-font {
             font-family: 'Outfit', 'Inter', sans-serif;
             letter-spacing: -0.02em;
+            font-weight: 600;
+            color: var(--text-primary);
         }
 
         /* Number tabular styling for financial and inventory precision */
@@ -67,220 +91,237 @@
         }
         ::-webkit-scrollbar-thumb {
             background: #CBD5E1;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
         }
         ::-webkit-scrollbar-thumb:hover {
             background: #94A3B8;
         }
 
-        /* Sidebar Styling */
+        /* Sidebar Styling (Solid Neutral Surface, WCAG AAA Contrast >= 7.0:1) */
         .sidebar {
             width: var(--ff-sidebar-width);
-            background: linear-gradient(180deg, var(--ff-navy) 0%, var(--ff-navy-dark) 100%);
-            color: #94A3B8;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text-secondary);
             min-height: 100vh;
             position: fixed;
             top: 0;
             left: 0;
             z-index: 1040;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             overflow-y: auto;
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid var(--sidebar-border);
             display: flex;
             flex-direction: column;
+            transform: translateX(0);
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .sidebar .brand {
-            padding: 20px 22px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #FFFFFF;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            padding: 16px 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--sidebar-text);
+            border-bottom: 1px solid var(--sidebar-border);
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
         .sidebar .brand .logo-icon {
-            width: 34px;
-            height: 34px;
-            background: linear-gradient(135deg, #0EA5E9 0%, #0D9488 100%);
-            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #FFFFFF;
-            font-size: 1.15rem;
-            box-shadow: 0 4px 10px rgba(14, 165, 233, 0.35);
+            color: #F8FAFC;
+            font-size: 1.1rem;
         }
 
         .sidebar .brand .badge-tag {
             font-size: 0.65rem;
-            font-weight: 700;
-            background: rgba(14, 165, 233, 0.2);
-            color: #38BDF8;
-            padding: 3px 8px;
-            border-radius: 9999px;
-            border: 1px solid rgba(14, 165, 233, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-weight: 600;
+            background-color: #1E293B;
+            color: var(--sidebar-text-muted);
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            border: 1px solid #334155;
+            letter-spacing: 0.4px;
         }
 
         .nav-section-title {
-            font-size: 0.68rem;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: #475569;
-            padding: 16px 22px 6px;
-            font-weight: 700;
+            font-size: 0.72rem;
+            text-transform: none;
+            letter-spacing: 0.2px;
+            color: var(--sidebar-text-muted);
+            padding: 16px 20px 8px;
+            font-weight: 600;
         }
 
         .sidebar .nav-link {
-            color: #94A3B8;
-            padding: 9px 20px;
-            margin: 2px 10px;
-            border-radius: 8px;
-            font-size: 0.86rem;
+            color: var(--sidebar-text-secondary);
+            padding: 8px 16px;
+            margin: 2px 8px;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
             font-weight: 500;
             display: flex;
             align-items: center;
             gap: 12px;
-            transition: all 0.15s ease-in-out;
+            transition: background-color 0.15s ease, color 0.15s ease;
             text-decoration: none;
         }
 
         .sidebar .nav-link:hover {
             color: #FFFFFF;
             background-color: rgba(255, 255, 255, 0.06);
-            transform: translateX(2px);
         }
 
         .sidebar .nav-link.active {
             color: #FFFFFF;
-            background: linear-gradient(90deg, rgba(14, 165, 233, 0.2) 0%, rgba(14, 165, 233, 0.05) 100%);
-            border-left: 3px solid #0EA5E9;
+            background-color: #1E293B;
+            border-left: 3px solid var(--color-primary);
             font-weight: 600;
         }
 
         .sidebar .nav-link i {
-            font-size: 1.1rem;
-            color: #64748B;
+            font-size: 1rem;
+            color: var(--sidebar-text-muted);
             transition: color 0.15s ease-in-out;
         }
 
         .sidebar .nav-link:hover i,
         .sidebar .nav-link.active i {
-            color: #38BDF8;
+            color: #FFFFFF;
         }
 
         .sidebar-footer {
             margin-top: auto;
             padding: 16px 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.07);
-            background: rgba(0, 0, 0, 0.15);
+            border-top: 1px solid var(--sidebar-border);
+            background-color: #070B19;
             font-size: 0.75rem;
         }
 
-        /* Main Content Layout */
+        /* Main Content Layout (Composited layout, no dimensional margin transitions) */
         .main-wrapper {
             margin-left: var(--ff-sidebar-width);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .top-navbar {
-            background-color: #FFFFFF;
-            border-bottom: 1px solid var(--ff-card-border);
-            padding: 12px 28px;
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             position: sticky;
             top: 0;
             z-index: 1030;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
 
         .content-area {
-            padding: 28px;
+            padding: 24px;
             flex: 1;
         }
 
-        /* SaaS Metric Cards */
+        /* SaaS Metric Cards (Standard 10px radius, quiet neutral shadow) */
         .metric-card {
-            background: #FFFFFF;
-            border: 1px solid var(--ff-card-border);
-            border-radius: 12px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
             padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
             position: relative;
             overflow: hidden;
         }
 
         .metric-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
             border-color: #CBD5E1;
         }
 
         .metric-icon {
-            width: 46px;
-            height: 46px;
-            border-radius: 10px;
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.35rem;
+            font-size: 1.25rem;
             flex-shrink: 0;
         }
 
         .metric-title {
             font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
-            color: var(--ff-slate);
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
             font-weight: 600;
         }
 
         .metric-value {
-            font-size: 1.7rem;
-            font-weight: 700;
-            color: var(--ff-navy);
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--text-primary);
             margin: 4px 0 0;
             line-height: 1.2;
         }
 
-        /* Cards & Panels */
+        /* Cards & Structural Panels */
         .card-custom {
-            background: #FFFFFF;
-            border: 1px solid var(--ff-card-border);
-            border-radius: 12px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
             box-shadow: 0 1px 3px rgba(0,0,0,0.03);
             overflow: hidden;
         }
 
         .card-custom .card-header {
-            background-color: #FFFFFF;
-            border-bottom: 1px solid var(--ff-card-border);
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
             padding: 16px 20px;
             font-weight: 600;
-            color: var(--ff-navy);
+            color: var(--text-primary);
         }
 
-        /* SaaS Pill Status Badges */
+        /* Buttons & Form Controls Standardization */
+        .btn {
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover, .btn-primary:focus {
+            background-color: var(--color-primary-hover);
+            border-color: var(--color-primary-hover);
+            color: #FFFFFF;
+        }
+
+        /* SaaS Status Pills */
         .badge-status {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            padding: 4px 10px;
+            gap: 6px;
+            padding: 3px 10px;
             font-weight: 600;
-            font-size: 0.74rem;
+            font-size: 0.75rem;
             border-radius: 9999px;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.3px;
         }
 
         .badge-status::before {
@@ -335,14 +376,14 @@
         }
 
         .table-modern thead th {
-            background-color: #F8FAFC;
-            color: #475569;
-            font-size: 0.72rem;
-            font-weight: 700;
+            background-color: var(--canvas);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
+            letter-spacing: 0.5px;
             padding: 12px 16px;
-            border-bottom: 1px solid var(--ff-card-border);
+            border-bottom: 1px solid var(--border);
             border-top: none;
             white-space: nowrap;
         }
@@ -352,15 +393,15 @@
         }
 
         .table-modern tbody tr:hover {
-            background-color: #F8FAFC;
+            background-color: var(--canvas);
         }
 
         .table-modern tbody td {
-            padding: 14px 16px;
+            padding: 12px 16px;
             vertical-align: middle;
-            border-bottom: 1px solid #F1F5F9;
-            font-size: 0.86rem;
-            color: #334155;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.875rem;
+            color: var(--text-primary);
         }
 
         .table-modern tbody tr:last-child td {
@@ -375,10 +416,10 @@
             left: 0;
             right: 0;
             height: 60px;
-            background: #FFFFFF;
-            border-top: 1px solid var(--ff-card-border);
+            background-color: var(--surface);
+            border-top: 1px solid var(--border);
             z-index: 1050;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+            box-shadow: 0 -1px 3px rgba(0,0,0,0.05);
             justify-content: space-around;
             align-items: center;
         }
@@ -388,52 +429,52 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #64748B;
+            color: var(--text-muted);
             text-decoration: none;
-            font-size: 0.68rem;
-            font-weight: 600;
+            font-size: 0.75rem;
+            font-weight: 500;
             padding: 6px 12px;
             transition: color 0.15s;
         }
 
         .mobile-bottom-nav .nav-item-btn i {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             margin-bottom: 2px;
         }
 
         .mobile-bottom-nav .nav-item-btn.active,
         .mobile-bottom-nav .nav-item-btn:hover {
-            color: var(--ff-primary);
+            color: var(--color-primary);
         }
 
         .mobile-bottom-nav .nav-item-btn.cta-btn {
-            background: linear-gradient(135deg, #0284C7 0%, #0D9488 100%);
+            background-color: var(--color-primary);
             color: #FFFFFF;
             border-radius: 50%;
             width: 44px;
             height: 44px;
             margin-top: -16px;
-            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
-            border: 3px solid #FFFFFF;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border: 3px solid var(--surface);
         }
 
         .mobile-bottom-nav .nav-item-btn.cta-btn i {
             margin-bottom: 0;
-            font-size: 1.4rem;
+            font-size: 1.25rem;
         }
 
-        /* Mobile Responsive Adjustments */
+        /* Mobile Responsive Adjustments (GPU Composited transforms) */
         @media (max-width: 992px) {
             .sidebar {
-                margin-left: calc(-1 * var(--ff-sidebar-width));
+                transform: translateX(-100%);
             }
             .sidebar.show {
-                margin-left: 0;
-                box-shadow: 10px 0 30px rgba(0,0,0,0.3);
+                transform: translateX(0);
+                box-shadow: 4px 0 16px rgba(0,0,0,0.2);
             }
             .main-wrapper {
                 margin-left: 0;
-                padding-bottom: 70px; /* Space for bottom nav */
+                padding-bottom: 70px;
             }
             .top-navbar {
                 padding: 10px 16px;
@@ -452,7 +493,6 @@
                 right: 0;
                 bottom: 0;
                 background: rgba(15, 23, 42, 0.6);
-                backdrop-filter: blur(2px);
                 z-index: 1035;
             }
             .sidebar-backdrop.show {
@@ -477,7 +517,7 @@
                 </div>
                 <div>
                     <span class="brand-font fs-5 text-white fw-bold">FactoryFlow</span>
-                    <span class="d-block text-secondary" style="font-size: 0.65rem; margin-top: -3px;">Food ERP SaaS</span>
+                    <span class="d-block" style="color: var(--sidebar-text-muted); font-size: 0.65rem; margin-top: -3px;">Food ERP System</span>
                 </div>
             </div>
             <span class="badge-tag">TN GST</span>
@@ -504,14 +544,14 @@
             </a>
 
             <!-- Sales Operations -->
-            <div class="nav-section-title">Sales & Billing</div>
+            <div class="nav-section-title">Sales &amp; billing</div>
             <a href="{% url 'sales:order_list' %}" class="nav-link {% if 'sales' in request.resolver_match.app_names and 'order' in request.resolver_match.url_name and 'create' not in request.resolver_match.url_name %}active{% endif %}">
                 <i class="bi bi-receipt-cutoff"></i>
                 <span>Sales Orders</span>
             </a>
-            <a href="{% url 'sales:create_order' %}" class="nav-link {% if 'create_order' in request.resolver_match.url_name %}active{% endif %}" style="color: #38BDF8;">
-                <i class="bi bi-plus-circle-fill text-info"></i>
-                <span class="fw-bold">Field Order Entry</span>
+            <a href="{% url 'sales:create_order' %}" class="nav-link {% if 'create_order' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-plus-circle"></i>
+                <span>Field Order Entry</span>
             </a>
             <a href="{% url 'billing:invoice_list' %}" class="nav-link {% if 'billing' in request.resolver_match.app_names and 'invoice' in request.resolver_match.url_name %}active{% endif %}">
                 <i class="bi bi-file-earmark-text"></i>
@@ -523,13 +563,13 @@
             </a>
 
             <!-- Manufacturing & Operations -->
-            <div class="nav-section-title">Manufacturing</div>
+            <div class="nav-section-title">Manufacturing &amp; operations</div>
             <a href="{% url 'production:run_list' %}" class="nav-link {% if 'production' in request.resolver_match.app_names and 'create' not in request.resolver_match.url_name %}active{% endif %}">
                 <i class="bi bi-gear-wide-connected"></i>
                 <span>Production Runs</span>
             </a>
-            <a href="{% url 'production:create_run' %}" class="nav-link {% if 'create_run' in request.resolver_match.url_name %}active{% endif %}" style="color: #2DD4BF;">
-                <i class="bi bi-play-circle-fill text-teal"></i>
+            <a href="{% url 'production:create_run' %}" class="nav-link {% if 'create_run' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-play-circle"></i>
                 <span>Log Batch Output</span>
             </a>
             <a href="{% url 'bom:bom_list' %}" class="nav-link {% if 'bom' in request.resolver_match.app_names %}active{% endif %}">
@@ -550,7 +590,7 @@
             </a>
 
             <!-- Finance & Reports -->
-            <div class="nav-section-title">Finance & Compliance</div>
+            <div class="nav-section-title">Finance &amp; compliance</div>
             <a href="{% url 'payments:payment_list' %}" class="nav-link {% if 'payments' in request.resolver_match.app_names and 'ageing' not in request.resolver_match.url_name %}active{% endif %}">
                 <i class="bi bi-cash-stack"></i>
                 <span>Collections / Payments</span>

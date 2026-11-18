@@ -318,19 +318,19 @@
     <!-- TAB 2: PRODUCTION FLOOR DASHBOARD (SUPERVISOR VIEW)           -->
     <!-- ============================================================== -->
     {% if active_role_view == 'production' %}
-    <div class="card card-custom mb-4 border-0 shadow-sm bg-gradient text-white p-3" style="background: linear-gradient(135deg, #0F766E 0%, #115E59 100%);">
+    <div class="card card-custom mb-4 border-0 shadow-sm p-3" style="background-color: var(--surface); border: 1px solid var(--border) !important; border-left: 4px solid #10B981 !important;">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div>
-                <span class="badge bg-white bg-opacity-25 text-white mb-1"><i class="bi bi-gear-fill me-1"></i>Production Control Hub</span>
-                <h4 class="fw-bold mb-1 brand-font text-white">Manufacturing Floor Operations</h4>
-                <p class="mb-0 text-white-50 small">Track recipe batch scaling, direct material consumption, packaging losses, and 3% tolerance alerts.</p>
+                <span class="badge bg-success-subtle text-success border border-success-subtle mb-1"><i class="bi bi-gear-fill me-1"></i>Production Control Hub</span>
+                <h4 class="fw-bold mb-1 brand-font text-dark">Manufacturing Floor Operations</h4>
+                <p class="mb-0 text-muted small">Track recipe batch scaling, direct material consumption, packaging losses, and 3% tolerance alerts.</p>
             </div>
             <div class="d-flex gap-2">
-                <a href="{% url 'bom:bom_list' %}" class="btn btn-light bg-opacity-10 text-white border-white border-opacity-25 px-3 py-2 fw-semibold">
+                <a href="{% url 'bom:bom_list' %}" class="btn btn-outline-secondary px-3 py-2 fw-semibold">
                     <i class="bi bi-journal-text me-1"></i> Recipe BOMs
                 </a>
-                <a href="{% url 'production:create_run' %}" class="btn btn-warning text-dark px-4 py-2 fw-bold shadow">
-                    <i class="bi bi-plus-circle-fill me-1"></i> Log Batch Run
+                <a href="{% url 'production:create_run' %}" class="btn btn-primary px-3 py-2 fw-semibold">
+                    <i class="bi bi-plus-circle me-1"></i> Log Batch Run
                 </a>
             </div>
         </div>
@@ -510,16 +510,16 @@
     <!-- ============================================================== -->
     {% if active_role_view == 'salesman' %}
     <!-- Hero Action Card for Fast Mobile Order Taking -->
-    <div class="card card-custom mb-4 border-0 shadow-sm text-white" style="background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%);">
+    <div class="card card-custom mb-4 border-0 shadow-sm" style="background-color: var(--surface); border: 1px solid var(--border) !important; border-left: 4px solid var(--color-primary) !important;">
         <div class="card-body p-4">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
-                    <span class="badge bg-white bg-opacity-25 text-white mb-2"><i class="bi bi-phone me-1"></i>Field Sales Workspace</span>
-                    <h3 class="fw-bold mb-1 brand-font text-white">Book Retailer & Distributor Orders</h3>
-                    <p class="text-white-50 mb-0 small">Take orders on the road, check live finished goods stock, and calculate GST totals instantly.</p>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle mb-2"><i class="bi bi-phone me-1"></i>Field Sales Workspace</span>
+                    <h3 class="fw-bold mb-1 brand-font text-dark">Book Retailer &amp; Distributor Orders</h3>
+                    <p class="text-muted mb-0 small">Take orders on the road, check live finished goods stock, and calculate GST totals instantly.</p>
                 </div>
                 <div>
-                    <a href="{% url 'sales:create_order' %}" class="btn btn-warning btn-lg px-4 py-3 fw-bold shadow text-dark d-flex align-items-center gap-2">
+                    <a href="{% url 'sales:create_order' %}" class="btn btn-primary btn-lg px-4 py-3 fw-bold d-flex align-items-center gap-2">
                         <i class="bi bi-cart-plus-fill fs-4"></i>
                         <span>Take New Order</span>
                     </a>
@@ -669,18 +669,18 @@
     <!-- TAB 4: STATUTORY & AUDIT HUB (AUDITOR / OWNER VIEW)          -->
     <!-- ============================================================== -->
     {% if active_role_view == 'auditor' %}
-    <div class="card card-custom mb-4 border-0 shadow-sm text-white p-3" style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);">
+    <div class="card card-custom mb-4 border-0 shadow-sm p-3" style="background-color: var(--surface); border: 1px solid var(--border) !important; border-left: 4px solid #475569 !important;">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div>
-                <span class="badge bg-white bg-opacity-25 text-white mb-1"><i class="bi bi-shield-check me-1"></i>Internal Audit & Governance</span>
-                <h4 class="fw-bold mb-1 brand-font text-white">Financial & Statutory Audit Control</h4>
-                <p class="mb-0 text-white-50 small">Monitor GSTR-1 outward tax liability, 4-bucket receivables ageing, and immutable stock ledger entries.</p>
+                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle mb-1"><i class="bi bi-shield-check me-1"></i>Internal Audit &amp; Governance</span>
+                <h4 class="fw-bold mb-1 brand-font text-dark">Financial &amp; Statutory Audit Control</h4>
+                <p class="mb-0 text-muted small">Monitor GSTR-1 outward tax liability, 4-bucket receivables ageing, and immutable stock ledger entries.</p>
             </div>
             <div class="d-flex gap-2">
-                <a href="{% url 'payments:ageing_report' %}" class="btn btn-light bg-opacity-10 text-white border-white border-opacity-25 px-3 py-2 fw-semibold">
+                <a href="{% url 'payments:ageing_report' %}" class="btn btn-outline-secondary px-3 py-2 fw-semibold">
                     <i class="bi bi-clock-history me-1"></i> Full Ageing
                 </a>
-                <a href="{% url 'reports:report_hub' %}" class="btn btn-info text-white px-3 py-2 fw-bold shadow">
+                <a href="{% url 'reports:report_hub' %}" class="btn btn-primary px-3 py-2 fw-semibold">
                     <i class="bi bi-file-earmark-bar-graph me-1"></i> 16 Reports Hub
                 </a>
             </div>
